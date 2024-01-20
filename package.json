@@ -1,13 +1,13 @@
 {
   "name": "youtube-clone",
   "version": "1.0.0",
-  "description": "A Backend for Youtube clone",
+  "description": "A Backend for TMS",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
-  "author": "Rosan Chaudhary",
+  "author": "Rosan",
   "license": "ISC",
   "devDependencies": {
     "nodemon": "^3.0.2",
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
-    "cloudinary": "^1.41.0",
+    "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
