@@ -1,6 +1,6 @@
-import mongoose, { Schema } from "mongoose";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import mongoose, { Schema } from "mongoose";
 
 const userSchema = new Schema(
   {
@@ -42,7 +42,7 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Password is required"],
     },
-    refereshToken: {
+    refreshToken: {
       type: String,
     },
   },
@@ -67,21 +67,18 @@ userSchema.methods.generateAccessToken = function () {
       userName: this.userName,
       fullName: this.fullName,
     },
-    process.env.ACCESS_TOKEN,
+    process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
   );
 };
-userSchema.methods.generateRefereshToken = function () {
+userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
       _id: this._id,
-      email: this.email,
-      userName: this.userName,
-      fullName: this.fullName,
     },
-    process.env.REFERESH_TOKEN,
+    process.env.REFERESH_TOKEN_SECRET,
     {
       expiresIn: process.env.REFERESH_TOKEN_EXPIRY,
     }
