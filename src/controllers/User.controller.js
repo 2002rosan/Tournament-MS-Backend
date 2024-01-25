@@ -248,7 +248,9 @@ const changePassword = asyncHandler(async (req, res) => {
 
 // Get Current User
 const getCurrentUser = asyncHandler(async (req, res) => {
-  return res.status(200).json(200, req.user, "User fetched successfully");
+  return res
+    .status(200)
+    .json(new apiResponse(200, req.user, "User fetched successfully"));
 });
 
 // Upate user details or account
@@ -259,7 +261,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     throw new apiError(400, "All fields are required");
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -332,6 +334,77 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, user, "Cover image updated successfully"));
 });
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { userName } = req.params;
+
+  if (!userName?.trim()) {
+    throw new apiError(200, "User name is missing");
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: {
+        userName: userName?.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        from: "followers",
+        localField: "_id",
+        foreignField: "channel",
+        as: "followers",
+      },
+    },
+    {
+      $lookup: {
+        from: "followers",
+        localField: "_id",
+        foreignField: "follower",
+        as: "followedTo",
+      },
+    },
+    {
+      $addFields: {
+        followersCount: {
+          $size: "$followers",
+        },
+        channelsFollowedToCount: {
+          $size: "$followedTo",
+        },
+        isFollowed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$followers.follower"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullName: 1,
+        userName: 1,
+        followersCount: 1,
+        channelsFollowedToCount: 1,
+        isFollowed: 1,
+        avatar: 1,
+        coverImage: 1,
+        email: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new apiError(404, "Channel doesnot exists");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new apiResponse(200, channel[0], "User channel fetched successfully")
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -342,4 +415,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile,
 };
