@@ -90,7 +90,7 @@ const registerUser = asyncHandler(async (req, res) => {
 // Login User
 const loginUser = asyncHandler(async (req, res) => {
   // req data from body
-  const { email, userName, password } = req.body;
+  const { email, password } = req.body;
 
   if (!email && !password) {
     throw new apiError(400, "Please provide email or username");
@@ -274,7 +274,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
   ).select("-password");
   return res
     .status(200)
-    .josn(new apiResponse(200, user, "Account updated successfully"));
+    .json(new apiResponse(200, user, "Account updated successfully"));
 });
 
 // Update user avatar or profile pic
