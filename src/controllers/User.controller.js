@@ -29,7 +29,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 // Register User
 const registerUser = asyncHandler(async (req, res) => {
   // Get user details from frontend
-  const { fullName, email, userName, password } = req.body;
+  const { fullName, email, userName, password, role } = req.body;
   // Validation
   if (
     [fullName, email, userName, password].some((field) => field?.trim() === "")
@@ -71,6 +71,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     userName: userName.toLowerCase(),
+    role,
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -90,7 +91,7 @@ const registerUser = asyncHandler(async (req, res) => {
 // Login User
 const loginUser = asyncHandler(async (req, res) => {
   // req data from body
-  const { email, password } = req.body;
+  const { email, password, userName } = req.body;
 
   if (!email && !password) {
     throw new apiError(400, "Please provide email or username");
@@ -218,6 +219,22 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     new apiError(401, error?.message || "Invalid refresh token");
   }
 });
+
+export function checkRole(role) {
+  return (req, res, next) => {
+    // Assuming user information is stored in req.user
+    const user = req;
+    console.log(user);
+
+    if (user && user.roles && user.roles.includes(role)) {
+      // User has the required role, proceed to the next middleware or route handler
+      next();
+    } else {
+      // User does not have the required role, send a forbidden response
+      res.status(403).send("Forbidden");
+    }
+  };
+}
 
 // Change Current Password of a user
 const changePassword = asyncHandler(async (req, res) => {

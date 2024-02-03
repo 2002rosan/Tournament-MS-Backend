@@ -13,6 +13,7 @@ import {
   updateAccountDetails,
   updateUserCoverImage,
   getUserChannelProfile,
+  checkRole,
 } from "../controllers/User.controller.js";
 
 const router = Router();
@@ -58,4 +59,5 @@ router
 router.route("/c/:userName").get(verifyJWT, getUserChannelProfile);
 
 router.route("/history").get(verifyJWT, watchHistory);
+
 export default router;
