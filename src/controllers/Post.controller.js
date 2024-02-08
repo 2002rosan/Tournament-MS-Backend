@@ -1,7 +1,7 @@
-import { Post } from "../models/post.model";
-import { apiError } from "../utils/apiError";
-import { apiResponse } from "../utils/apiResponse";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Post } from "../models/post.model.js";
+import { apiError } from "../utils/apiError.js";
+import { apiResponse } from "../utils/apiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 // To create post / tweet
 const createPost = asyncHandler(async (req, res) => {
@@ -50,4 +50,28 @@ const getUserPosts = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new apiResponse(200, data, "Posts fetched successfully"));
+});
+
+// Update post or tweet
+const updatePost = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+  if (!postId) throw new apiError(404, "Post not found");
+
+  const { postContent } = req.body;
+  if (!postContent) throw new apiError(404, "Provide new post data");
+
+  const updatePost = await Post.findByIdAndUpdate(
+    postId,
+    {
+      $set: {
+        content: postContent,
+      },
+    },
+    { new: true }
+  );
+  if (!updatePost) throw new apiError(500, "Error while updating post");
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, updatePost, "Post updated Successfully!"));
 });
