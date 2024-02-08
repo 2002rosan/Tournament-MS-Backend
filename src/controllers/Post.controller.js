@@ -75,3 +75,16 @@ const updatePost = asyncHandler(async (req, res) => {
     .status(200)
     .json(new apiResponse(200, updatePost, "Post updated Successfully!"));
 });
+
+// Delete Post
+const deletePost = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+  if (!postId) throw new apiError(404, "No valid ID provided");
+
+  const postStatus = await Post.findByIdAndDelete(postId);
+  if (!postStatus) throw new apiError(500, "Error while deleting your post");
+
+  return res.status(200).json(new apiResponse(200, {}, "Post deleted"));
+});
+
+export { createPost, getUserPosts, updatePost, deletePost };
