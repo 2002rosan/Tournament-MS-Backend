@@ -128,23 +128,13 @@ const loginUser = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
-    .json(
-      // new apiResponse(
-      //   200, {
-      //   user: loggedInUser,
-      //   accessToken,
-      //   refreshToken,
-      // }),
-      // "User logged in successfully"
-      {
-        statusCode: 200,
-        user: loggedInUser,
-        accessToken,
-        refreshToken,
-        message: "User logged in successfully",
-        success: true,
-      }
-    );
+    .json({
+      statusCode: 200,
+      user: loggedInUser,
+      accessToken,
+      message: "User logged in successfully",
+      success: true,
+    });
 });
 
 // Logout user
@@ -308,7 +298,11 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new apiError(400, "Error while uploading file on cloudinary");
   }
 
-  const user = await User.findByIdAndUpdate(
+  // To delete previous avatar
+  const user = req.user;
+  const oldAvatar = user?.avatar;
+
+  const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -317,6 +311,10 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select("-password");
+
+  // removing old avatar from cloudinary
+  await removeFileFromCloudinary(oldAvatar);
+  fs.unlinkSync(avatarLocalPath);
 
   return res
     .status(200)
@@ -425,59 +423,59 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 });
 
 // User history
-const watchHistory = asyncHandler(async (req, res) => {
-  const user = await User.aggregate([
-    {
-      $match: {
-        _id: new mongoose.Types.ObjectId(req.user._id),
-      },
-    },
-    {
-      $lookup: {
-        from: "$videos",
-        localField: "watchHistory",
-        foreignField: "_id",
-        as: "watchHistory",
-        pipeline: [
-          {
-            $lookup: {
-              from: "users",
-              localField: "$videoOwner",
-              foreignField: "_id",
-              as: "videoOwner",
-              pipeline: [
-                {
-                  $project: {
-                    fullName: 1,
-                    userName: 1,
-                    avatar: 1,
-                  },
-                },
-              ],
-            },
-          },
-          {
-            $addFields: {
-              videoOwner: {
-                $first: "$videoOwner",
-              },
-            },
-          },
-        ],
-      },
-    },
-  ]);
+// const watchHistory = asyncHandler(async (req, res) => {
+//   const user = await User.aggregate([
+//     {
+//       $match: {
+//         _id: new mongoose.Types.ObjectId(req.user._id),
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: "$videos",
+//         localField: "watchHistory",
+//         foreignField: "_id",
+//         as: "watchHistory",
+//         pipeline: [
+//           {
+//             $lookup: {
+//               from: "users",
+//               localField: "$videoOwner",
+//               foreignField: "_id",
+//               as: "videoOwner",
+//               pipeline: [
+//                 {
+//                   $project: {
+//                     fullName: 1,
+//                     userName: 1,
+//                     avatar: 1,
+//                   },
+//                 },
+//               ],
+//             },
+//           },
+//           {
+//             $addFields: {
+//               videoOwner: {
+//                 $first: "$videoOwner",
+//               },
+//             },
+//           },
+//         ],
+//       },
+//     },
+//   ]);
 
-  return res
-    .status(200)
-    .json(
-      new apiResponse(
-        200,
-        user[0].watchHistory,
-        "Watch history fetched successfully"
-      )
-    );
-});
+//   return res
+//     .status(200)
+//     .json(
+//       new apiResponse(
+//         200,
+//         user[0].watchHistory,
+//         "Watch history fetched successfully"
+//       )
+//     );
+// });
 
 export {
   registerUser,
@@ -490,5 +488,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelProfile,
-  watchHistory,
+  // watchHistory,
 };

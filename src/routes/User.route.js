@@ -4,7 +4,7 @@ import { verifyJWT } from "../middlewares/Auth.middleware.js";
 import {
   loginUser,
   logoutUser,
-  watchHistory,
+  // watchHistory,
   registerUser,
   changePassword,
   getCurrentUser,
@@ -58,6 +58,6 @@ router
 
 router.route("/c/:userName").get(verifyJWT, getUserChannelProfile);
 
-router.route("/history").get(verifyJWT, watchHistory);
+// router.route("/history").get(verifyJWT, watchHistory);
 
 export default router;
