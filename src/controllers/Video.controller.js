@@ -88,9 +88,10 @@ const publishVideo = asyncHandler(async (req, res) => {
   const videoDuration = uploadVideoOnCloudinary.duration;
   const totalDurationInMinutes = Math.floor(videoDuration / 60);
   const totalRemainingSeconds = Math.round(videoDuration % 60);
-  const durationString = (`${totalDurationInMinutes}:${
+  const durationString = `${totalDurationInMinutes}:${
     totalRemainingSeconds < 10 ? "0" : ""
-  }${totalRemainingSeconds}`[(minutes, seconds)] = durationString.split(":"));
+  }${totalRemainingSeconds}`;
+  const [minutes, seconds] = durationString.split(":");
   const duration = parseInt(minutes) * 60 + parseInt(seconds);
 
   // Upload thumbnail
@@ -112,8 +113,8 @@ const publishVideo = asyncHandler(async (req, res) => {
     throw new apiError(500, "Internal Error Occurred while creating a video");
 
   //   Remove temp file
-  fs.unlinkSync(videoFile);
-  fs.unlinkSync(thumbnail);
+  // fs.unlinkSync(videoFile);
+  // fs.unlinkSync(thumbnail);
 
   return res
     .status(200)
@@ -175,6 +176,7 @@ const updateVideo = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, {}, "Video updated"));
 });
 
+// To make video private or public
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   if (!videoId) throw new apiError(404, "Please provide a valid video id");
