@@ -10,7 +10,7 @@ const likeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Video",
     },
-    likeBy: {
+    likedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
@@ -21,3 +21,5 @@ const likeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+export const Like = mongoose.model("Like", likeSchema);
