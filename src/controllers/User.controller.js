@@ -453,61 +453,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
-// User history
-// const watchHistory = asyncHandler(async (req, res) => {
-//   const user = await User.aggregate([
-//     {
-//       $match: {
-//         _id: new mongoose.Types.ObjectId(req.user._id),
-//       },
-//     },
-//     {
-//       $lookup: {
-//         from: "$videos",
-//         localField: "watchHistory",
-//         foreignField: "_id",
-//         as: "watchHistory",
-//         pipeline: [
-//           {
-//             $lookup: {
-//               from: "users",
-//               localField: "$videoOwner",
-//               foreignField: "_id",
-//               as: "videoOwner",
-//               pipeline: [
-//                 {
-//                   $project: {
-//                     fullName: 1,
-//                     userName: 1,
-//                     avatar: 1,
-//                   },
-//                 },
-//               ],
-//             },
-//           },
-//           {
-//             $addFields: {
-//               videoOwner: {
-//                 $first: "$videoOwner",
-//               },
-//             },
-//           },
-//         ],
-//       },
-//     },
-//   ]);
-
-//   return res
-//     .status(200)
-//     .json(
-//       new apiResponse(
-//         200,
-//         user[0].watchHistory,
-//         "Watch history fetched successfully"
-//       )
-//     );
-// });
-
 export {
   registerUser,
   loginUser,
