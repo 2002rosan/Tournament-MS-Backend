@@ -33,10 +33,12 @@ import UserRouter from "./routes/User.routes.js";
 import VideoRouter from "./routes/Video.routes.js";
 import PostRouter from "./routes/Post.routes.js";
 import LikeRouter from "./routes/Like.routes.js";
+import TournamentRouter from "./routes/Tournament.routes.js";
 // Routes declaration
 app.use("/api/users", UserRouter);
 app.use("/api/videos", VideoRouter);
 app.use("/api/post", PostRouter);
 app.use("/api/like", LikeRouter);
+app.use("/api/tournament", TournamentRouter);
 
 export { app };
