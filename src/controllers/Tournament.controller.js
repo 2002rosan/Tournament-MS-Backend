@@ -1,9 +1,11 @@
 import { Tournament } from "../models/tournament.model.js";
-import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import {
+  uploadOnCloudinary,
+  removeFileFromCloudinary,
+} from "../utils/Cloudinary.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import fs from "fs";
 
 // To create or organize tournament
 const createTournament = asyncHandler(async (req, res) => {
@@ -58,10 +60,24 @@ const updateTournament = asyncHandler(async (req, res) => {
     },
   });
   // Delets old banner
-  await removieFileFromCloudinary(tournament?.banner);
-  fs.unlinkSync(newBanner);
+  await removeFileFromCloudinary(tournament?.banner);
 
   return res.status(200).json(new apiResponse(200, {}, "Tournament updated"));
 });
 
-export { createTournament };
+// Delete tournament
+const deleteTournament = asyncHandler(async (req, res) => {
+  const { tournamentId } = req.params;
+  if (!tournamentId) throw new apiError(404, "Invalid tournament Id");
+
+  const tournament = await Tournament.findByIdAndDelete({ _id: tournamentId });
+  if (!tournament)
+    throw new apiError(
+      500,
+      "The tournament you are trying to delete doesnot exists"
+    );
+
+  return res.status(200).json(new apiResponse(200, {}, "Tournament deleted"));
+});
+
+export { createTournament, updateTournament, deleteTournament };
