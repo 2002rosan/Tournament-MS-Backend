@@ -170,50 +170,77 @@ const logoutUser = asyncHandler(async (req, res) => {
 // Refresh Access Token
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
+    req.cookies?.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
     throw new apiError(401, "Unauthorized request");
   }
 
-  try {
-    const decodedToken = jwt.verify(
-      incomingRefreshToken,
-      process.env.REFERESH_TOKEN_SECRET
+  // This code didnt work
+  // try {
+  //   const decodedToken = jwt.verify(
+  //     incomingRefreshToken,
+  //     process.env.REFERESH_TOKEN_SECRET
+  //   );
+
+  //   const user = User.findById(decodedToken?._id);
+
+  //   if (!user) {
+  //     throw new apiError(401, "Invalid refresh token");
+  //   }
+
+  //   if (incomingRefreshToken !== user?.refreshToken) {
+  //     throw new apiError(401, "Refresh token expired");
+  //   }
+
+  //   const options = {
+  //     httpOnly: true,
+  //     secure: true,
+  //   };
+
+  //   const { accessToken, newRefreshToken } =
+  //     await generateAccessAndRefreshToken(user._id);
+
+  //   return res
+  //     .status(200)
+  //     .cookie("accessToken", accessToken, options)
+  //     .cookie("refreshToken", newRefreshToken, options)
+  //     .json(
+  //       new apiResponse(
+  //         200,
+  //         { accessToken, refreshToken: newRefreshToken },
+  //         "Access token refreshed successfully"
+  //       )
+  //     );
+  // } catch (error) {
+  //   new apiError(401, error?.message || "Invalid refresh token");
+  // }
+
+  const user = await User.findOne({
+    refreshToken: incomingRefreshToken,
+  });
+  if (!user) throw new apiError(401, "Invalid refresh token");
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiResponse(
+        200,
+        { accessToken, refreshToken },
+        "Access token refreshed"
+      )
     );
-
-    const user = User.findById(decodedToken?._id);
-
-    if (!user) {
-      throw new apiError(401, "Invalid refresh token");
-    }
-
-    if (incomingRefreshToken !== user?.refreshToken) {
-      throw new apiError(401, "Refresh token expired");
-    }
-
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
-
-    const { accessToken, newRefreshToken } =
-      await generateAccessAndRefreshToken(user._id);
-
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
-      .json(
-        new apiResponse(
-          200,
-          { accessToken, refreshToken: newRefreshToken },
-          "Access token refreshed successfully"
-        )
-      );
-  } catch (error) {
-    new apiError(401, error?.message || "Invalid refresh token");
-  }
 });
 
 export function checkRole(role) {
