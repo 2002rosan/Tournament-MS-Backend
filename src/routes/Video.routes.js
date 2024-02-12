@@ -12,7 +12,7 @@ import { upload } from "../middlewares/Multer.middleware.js";
 
 const router = Router();
 
-router.route("/").get(verifyJWT, getAllVideo);
+router.route("/").get(getAllVideo);
 router.route("/upload-video").post(
   verifyJWT,
   upload.fields([
