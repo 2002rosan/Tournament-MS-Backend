@@ -8,6 +8,7 @@ import {
   removeFileFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/Cloudinary.js";
+import fs from "fs";
 
 // generate access and refresh tokens
 const generateAccessAndRefreshToken = async (userId) => {
@@ -63,8 +64,8 @@ const registerUser = asyncHandler(async (req, res) => {
   // Upload them to cloudinary
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-  fs.unlinkSync(avatarLocalPath);
-  if (coverImageLocalPath) fs.unlinkSync(coverImageLocalPath);
+  // fs.unlinkSync(avatarLocalPath);
+  // if (coverImageLocalPath) fs.unlinkSync(coverImageLocalPath);
 
   if (!avatar) {
     throw new apiError(400, "Avatar file is required");

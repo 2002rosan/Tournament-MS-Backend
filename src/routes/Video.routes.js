@@ -32,6 +32,6 @@ router.route("/:videoId").get(verifyJWT, getVideoDetails);
 router
   .route("/:videoId")
   .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
-router.route("toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus);
+router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus);
 
 export default router;

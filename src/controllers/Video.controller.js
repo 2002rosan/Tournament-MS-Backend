@@ -98,6 +98,7 @@ const publishVideo = asyncHandler(async (req, res) => {
   const uploadThumbnailURL = await uploadOnCloudinary(thumbnail);
   if (!uploadThumbnailURL)
     throw new apiError(500, "Failed to upload Thumbnail");
+
   const owner = req.user?._id;
   const video = await Video.create({
     videoFile: uploadVideoOnCloudinary.url,
@@ -171,7 +172,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     },
   });
   await removeFileFromCloudinary(video?.thumbnail);
-  fs.unlinkSync(newThumbnail);
+  // fs.unlinkSync(newThumbnail);
 
   return res.status(200).json(new apiResponse(200, {}, "Video updated"));
 });

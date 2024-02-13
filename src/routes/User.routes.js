@@ -4,7 +4,6 @@ import { verifyJWT } from "../middlewares/Auth.middleware.js";
 import {
   loginUser,
   logoutUser,
-  // watchHistory,
   registerUser,
   changePassword,
   getCurrentUser,
