@@ -14,6 +14,7 @@ import {
   getUserChannelProfile,
   checkRole,
 } from "../controllers/User.controller.js";
+import { apiResponse } from "../utils/apiResponse.js";
 
 const router = Router();
 
@@ -58,5 +59,12 @@ router
 router.route("/c/:userName").get(verifyJWT, getUserChannelProfile);
 
 // router.route("/history").get(verifyJWT, watchHistory);
+
+router.get("/verifyUser", verifyJWT, (req, res) => {
+  const data = { message: "Welcome" };
+  return res
+    .status(200)
+    .json(new apiResponse(200, req.user.fullName, "Success"));
+});
 
 export default router;

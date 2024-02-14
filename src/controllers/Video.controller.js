@@ -99,11 +99,12 @@ const publishVideo = asyncHandler(async (req, res) => {
   if (!uploadThumbnailURL)
     throw new apiError(500, "Failed to upload Thumbnail");
 
-  const owner = req.user?._id;
+  const id = req.user?._id;
+  const userName = req.user?.userName;
   const video = await Video.create({
     videoFile: uploadVideoOnCloudinary.url,
     thumbnail: uploadThumbnailURL.url,
-    owner,
+    owner: { id, userName },
     title,
     description,
     duration,
@@ -160,21 +161,21 @@ const updateVideo = asyncHandler(async (req, res) => {
   if (!title || !description)
     throw new apiError(404, "Title or description is required");
 
-  const newThumbnail = req.file?.path;
-  if (!newThumbnail) throw new apiError(404, "No image found to update");
+  // const newThumbnail = req.file?.path;
+  // if (!newThumbnail) throw new apiError(404, "No image found to update");
 
-  const UploadNewThumbnail = await uploadOnCloudinary(newThumbnail);
+  // const UploadNewThumbnail = await uploadOnCloudinary(newThumbnail);
   const video = await Video.findByIdAndUpdate(videoId, {
     $set: {
-      thumbnail: UploadNewThumbnail?.url,
+      // thumbnail: UploadNewThumbnail?.url,
       title,
       description,
     },
   });
-  await removeFileFromCloudinary(video?.thumbnail);
+  // await removeFileFromCloudinary(video?.thumbnail);
   // fs.unlinkSync(newThumbnail);
 
-  return res.status(200).json(new apiResponse(200, {}, "Video updated"));
+  return res.status(200).json(new apiResponse(200, { video }, "Video updated"));
 });
 
 // To make video private or public

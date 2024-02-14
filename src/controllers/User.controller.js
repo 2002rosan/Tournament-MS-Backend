@@ -11,9 +11,9 @@ import {
 import fs from "fs";
 
 // generate access and refresh tokens
-const generateAccessAndRefreshToken = async (userId) => {
+const generateAccessAndRefreshToken = async (userDetail) => {
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userDetail.id);
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
@@ -117,9 +117,10 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new apiError(401, "Invalid user credentials");
   }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    user._id
-  );
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken({
+    id: user._id,
+    userName: user.userName,
+  });
 
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
@@ -146,6 +147,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 // Logout user
 const logoutUser = asyncHandler(async (req, res) => {
+  console.log("Logout vayo");
   User.findByIdAndUpdate(
     req.user._id,
     {
