@@ -35,6 +35,7 @@ import LikeRouter from "./routes/Like.routes.js";
 import GameRouter from "./routes/Game.routes.js";
 import VideoRouter from "./routes/Video.routes.js";
 import TournamentRouter from "./routes/Tournament.routes.js";
+import { errorHandler } from "./middlewares/Error.middleware.js";
 // Routes declaration
 app.use("/api/users", UserRouter);
 app.use("/api/post", PostRouter);
@@ -42,5 +43,6 @@ app.use("/api/like", LikeRouter);
 app.use("/api/game", GameRouter);
 app.use("/api/videos", VideoRouter);
 app.use("/api/tournament", TournamentRouter);
+app.use(errorHandler);
 
 export { app };
