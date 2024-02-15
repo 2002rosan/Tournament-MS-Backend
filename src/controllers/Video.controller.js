@@ -7,17 +7,38 @@ import {
   removeFileFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/Cloudinary.js";
-import { User } from "../models/user.model.js";
 import fs from "fs";
 
 // To get/fetch all videos and its data from DB
 const getAllVideo = asyncHandler(async (req, res, next) => {
-  const { page = 1, limit = 1, query, sortBy, sortType, userId } = req.query;
+  const { sortBy, title } = req.query;
+  let page = parseInt(req.query?.page) || 1;
+  let limit = parseInt(req.query?.limit) || 5;
+  console.log(title);
+
+  if (isNaN(page) || isNaN(limit)) {
+    throw new apiError(400, "Invalid page or limit");
+  }
+
+  let sortOption = {};
+  if (sortBy === "asc") {
+    sortOption._id = 1;
+  } else {
+    sortOption._id = -1;
+  }
+
+  let queryOption = {};
+  if (title) {
+    queryOption.$text = { $search: title };
+  }
+
+  const getVideo = queryOption ? Video.find(queryOption) : Video.find();
   try {
-    const data = await Video.find()
+    const data = await getVideo
+      .sort(sortOption)
       .skip((page - 1) * limit)
       .limit(limit)
-      .populate("ownerId", "userName avatar");
+      .populate([{ path: "ownerId", select: "userName avatar" }]);
 
     return res.status(200).json(new apiResponse(200, data, "Video Fetched"));
   } catch (error) {
@@ -26,58 +47,66 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
 });
 
 // To publish a video
-const publishVideo = asyncHandler(async (req, res) => {
+const publishVideo = asyncHandler(async (req, res, next) => {
   const { title, description } = req.body;
 
-  // const videoFile = req.files?.videoFile[0]?.path;
-  // if (!videoFile) throw new apiError(400, "No file uploaded");
-  // console.log(videoFile);
+  try {
+    let video;
+    const ownerId = req.user?._id;
+    if (false) {
+      const videoFile = req.files?.videoFile[0]?.path;
+      if (!videoFile) throw new apiError(400, "No file uploaded");
+      console.log(videoFile);
 
-  const thumbnail = req.files?.thumbnail?.[0]?.path;
-  if (!thumbnail) throw new apiError(400, "Thumbnail not provided");
+      const thumbnail = req.files?.thumbnail?.[0]?.path;
+      if (!thumbnail) throw new apiError(400, "Thumbnail not provided");
 
-  // Upload Video to cloudinary
-  // const uploadVideoOnCloudinary = await uploadOnCloudinary(videoFile);
-  // if (!uploadVideoOnCloudinary)
-  //   throw new apiError(500, "Failed to upload the video on Cloudinary");
+      // Upload Video to cloudinary
+      const uploadVideoOnCloudinary = await uploadOnCloudinary(videoFile);
+      if (!uploadVideoOnCloudinary)
+        throw new apiError(500, "Failed to upload the video on Cloudinary");
 
-  // const videoDuration = uploadVideoOnCloudinary.duration;
-  // const totalDurationInMinutes = Math.floor(videoDuration / 60);
-  // const totalRemainingSeconds = Math.round(videoDuration % 60);
-  // const durationString = `${totalDurationInMinutes}:${
-  //   totalRemainingSeconds < 10 ? "0" : ""
-  // }${totalRemainingSeconds}`;
-  // const [minutes, seconds] = durationString.split(":");
-  // const duration = parseInt(minutes) * 60 + parseInt(seconds);
+      const videoDuration = uploadVideoOnCloudinary.duration;
+      const totalDurationInMinutes = Math.floor(videoDuration / 60);
+      const totalRemainingSeconds = Math.round(videoDuration % 60);
+      const durationString = `${totalDurationInMinutes}:${
+        totalRemainingSeconds < 10 ? "0" : ""
+      }${totalRemainingSeconds}`;
+      const [minutes, seconds] = durationString.split(":");
+      const duration = parseInt(minutes) * 60 + parseInt(seconds);
 
-  // Upload thumbnail
-  const uploadThumbnailURL = await uploadOnCloudinary(thumbnail);
-  if (!uploadThumbnailURL)
-    throw new apiError(500, "Failed to upload Thumbnail");
+      // Upload thumbnail
+      const uploadThumbnailURL = await uploadOnCloudinary(thumbnail);
+      if (!uploadThumbnailURL)
+        throw new apiError(500, "Failed to upload Thumbnail");
 
-  const ownerId = req.user?._id;
+      video = await Video.create({
+        videoFile: uploadVideoOnCloudinary.url,
+        thumbnail: uploadThumbnailURL.url,
+        ownerId,
+        title,
+        description,
+        duration,
+      });
+    } else {
+      video = await Video.create({
+        videoFile:
+          "http://res.cloudinary.com/dx0lvc2ty/video/upload/v1707997121/w5mtkqzadfjvv2vnzcbi.mp4",
+        thumbnail:
+          "http://res.cloudinary.com/dx0lvc2ty/image/upload/v1708000720/zp6d0puxhwhe9md2vlcm.jpg",
+        ownerId,
+        title,
+        description,
+        duration: 10,
+      });
+    }
 
-  const video = await Video.create({
-    videoFile:
-      "http://res.cloudinary.com/dx0lvc2ty/video/upload/v1707997121/w5mtkqzadfjvv2vnzcbi.mp4",
-    thumbnail: uploadThumbnailURL.url,
-    ownerId,
-    title,
-    description,
-    duration: 10,
-  });
-  const videoFileData = await Video.findOne(video._id).select("-isPublished");
-
-  if (!videoFileData)
-    throw new apiError(500, "Internal Error Occurred while creating a video");
-
-  //   Remove temp file
-  // fs.unlinkSync(videoFile);
-  // fs.unlinkSync(thumbnail);
-
-  return res
-    .status(200)
-    .json(new apiResponse(200, videoFileData, "Video uploaded successfully"));
+    return res
+      .status(200)
+      .json(new apiResponse(200, video, "Video uploaded successfully"));
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Delete video

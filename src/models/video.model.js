@@ -38,6 +38,7 @@ const videoSchema = new Schema(
   },
   { timestamps: true }
 );
+videoSchema.index({ title: "text" });
 
 videoSchema.plugin(mongooseAggregatePaginate);
 
