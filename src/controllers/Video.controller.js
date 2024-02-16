@@ -53,53 +53,40 @@ const publishVideo = asyncHandler(async (req, res, next) => {
   try {
     let video;
     const ownerId = req.user?._id;
-    if (false) {
-      const videoFile = req.files?.videoFile[0]?.path;
-      if (!videoFile) throw new apiError(400, "No file uploaded");
-      console.log(videoFile);
+    const videoFile = req.files?.videoFile[0]?.path;
+    if (!videoFile) throw new apiError(400, "No file uploaded");
+    console.log(videoFile);
 
-      const thumbnail = req.files?.thumbnail?.[0]?.path;
-      if (!thumbnail) throw new apiError(400, "Thumbnail not provided");
+    const thumbnail = req.files?.thumbnail?.[0]?.path;
+    if (!thumbnail) throw new apiError(400, "Thumbnail not provided");
 
-      // Upload Video to cloudinary
-      const uploadVideoOnCloudinary = await uploadOnCloudinary(videoFile);
-      if (!uploadVideoOnCloudinary)
-        throw new apiError(500, "Failed to upload the video on Cloudinary");
+    // Upload Video to cloudinary
+    const uploadVideoOnCloudinary = await uploadOnCloudinary(videoFile);
+    if (!uploadVideoOnCloudinary)
+      throw new apiError(500, "Failed to upload the video on Cloudinary");
 
-      const videoDuration = uploadVideoOnCloudinary.duration;
-      const totalDurationInMinutes = Math.floor(videoDuration / 60);
-      const totalRemainingSeconds = Math.round(videoDuration % 60);
-      const durationString = `${totalDurationInMinutes}:${
-        totalRemainingSeconds < 10 ? "0" : ""
-      }${totalRemainingSeconds}`;
-      const [minutes, seconds] = durationString.split(":");
-      const duration = parseInt(minutes) * 60 + parseInt(seconds);
+    const videoDuration = uploadVideoOnCloudinary.duration;
+    const totalDurationInMinutes = Math.floor(videoDuration / 60);
+    const totalRemainingSeconds = Math.round(videoDuration % 60);
+    const durationString = `${totalDurationInMinutes}:${
+      totalRemainingSeconds < 10 ? "0" : ""
+    }${totalRemainingSeconds}`;
+    const [minutes, seconds] = durationString.split(":");
+    const duration = parseInt(minutes) * 60 + parseInt(seconds);
 
-      // Upload thumbnail
-      const uploadThumbnailURL = await uploadOnCloudinary(thumbnail);
-      if (!uploadThumbnailURL)
-        throw new apiError(500, "Failed to upload Thumbnail");
+    // Upload thumbnail
+    const uploadThumbnailURL = await uploadOnCloudinary(thumbnail);
+    if (!uploadThumbnailURL)
+      throw new apiError(500, "Failed to upload Thumbnail");
 
-      video = await Video.create({
-        videoFile: uploadVideoOnCloudinary.url,
-        thumbnail: uploadThumbnailURL.url,
-        ownerId,
-        title,
-        description,
-        duration,
-      });
-    } else {
-      video = await Video.create({
-        videoFile:
-          "http://res.cloudinary.com/dx0lvc2ty/video/upload/v1707997121/w5mtkqzadfjvv2vnzcbi.mp4",
-        thumbnail:
-          "http://res.cloudinary.com/dx0lvc2ty/image/upload/v1708000720/zp6d0puxhwhe9md2vlcm.jpg",
-        ownerId,
-        title,
-        description,
-        duration: 10,
-      });
-    }
+    video = await Video.create({
+      videoFile: uploadVideoOnCloudinary.url,
+      thumbnail: uploadThumbnailURL.url,
+      ownerId,
+      title,
+      description,
+      duration,
+    });
 
     return res
       .status(200)
@@ -147,18 +134,18 @@ const updateVideo = asyncHandler(async (req, res) => {
   if (!title || !description)
     throw new apiError(404, "Title or description is required");
 
-  // const newThumbnail = req.file?.path;
-  // if (!newThumbnail) throw new apiError(404, "No image found to update");
+  const newThumbnail = req.file?.path;
+  if (!newThumbnail) throw new apiError(404, "No image found to update");
 
-  // const UploadNewThumbnail = await uploadOnCloudinary(newThumbnail);
+  const UploadNewThumbnail = await uploadOnCloudinary(newThumbnail);
   const video = await Video.findByIdAndUpdate(videoId, {
     $set: {
-      // thumbnail: UploadNewThumbnail?.url,
+      thumbnail: UploadNewThumbnail?.url,
       title,
       description,
     },
   });
-  // await removeFileFromCloudinary(video?.thumbnail);
+  await removeFileFromCloudinary(video?.thumbnail);
   // fs.unlinkSync(newThumbnail);
 
   return res.status(200).json(new apiResponse(200, { video }, "Video updated"));
