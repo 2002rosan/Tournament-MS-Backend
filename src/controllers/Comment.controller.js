@@ -30,9 +30,28 @@ const getVideoComments = asyncHandler(async (req, res) => {
       },
     },
     {
+      $lookup: {
+        from: "likes",
+        let: { commentId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$comment", "$$commentId"],
+              },
+            },
+          },
+        ],
+        as: "commentLikes",
+      },
+    },
+    {
       $addFields: {
         userName: {
           $first: "$userName",
+        },
+        likeCount: {
+          $size: "$commentLikes",
         },
       },
     },
@@ -42,6 +61,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         "userName.userName": 1,
         "userName.avatar": 1,
         "userName.createdAt": 1,
+        likeCount: 1,
       },
     },
     {
