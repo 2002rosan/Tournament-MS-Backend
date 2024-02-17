@@ -5,18 +5,24 @@ import { Video } from "../models/video.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 
+// To get profile stats
 const getProfileStats = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
 
   // count followers
-  const [countFollower] = await Follower.aggregate([
+  const totalFollowers = await Follower.aggregate([
     {
       $match: {
         channel: new mongoose.Types.ObjectId(userId),
       },
     },
     {
-      $count: "Total_followers",
+      $group: {
+        _id: null,
+        followerCount: {
+          $sum: 1,
+        },
+      },
     },
   ]);
 
@@ -33,7 +39,7 @@ const getProfileStats = asyncHandler(async (req, res) => {
   ]);
 
   // Total likes per video
-  const [totalLikes] = await Video.aggregate([
+  const videoLikes = await Video.aggregate([
     {
       $match: {
         ownerId: new mongoose.Types.ObjectId(userId),
@@ -43,36 +49,52 @@ const getProfileStats = asyncHandler(async (req, res) => {
       $lookup: {
         from: "likes",
         localField: "_id",
-        foreignField: "videoId",
-        as: "likedVideos",
+        foreignField: "video",
+        as: "likes",
       },
     },
     {
       $project: {
-        videoFile: 1,
-        thumbnail: 1,
-        title: 1,
-        description: 1,
-        duration: 1,
-        views: 1,
         totalLikes: {
-          $size: "$likedVideos",
+          $size: "$likes",
+        },
+        totalViews: "$views",
+        totalVideos: 1,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalLikes: {
+          $sum: "$totalLikes",
+        },
+        totalViews: {
+          $sum: "$totalViews",
+        },
+        totalVideos: {
+          $sum: 1,
         },
       },
     },
   ]);
 
+  const channelStats = {
+    totalFollowers: totalFollowers[0]?.followerCount || 0,
+    totalVideos: totalVideos.Total_videos || 0,
+    totalLikes: videoLikes[0]?.totalLikes || 0,
+    totalViews: videoLikes[0]?.totalViews || 0,
+  };
+
+  if (!channelStats) throw new apiError(404, "No stats found");
+
   return res
     .status(200)
     .json(
-      new apiResponse(
-        200,
-        [countFollower, totalVideos, totalLikes],
-        "Profile stats fetched successfully"
-      )
+      new apiResponse(200, channelStats, "Profile stats fetched successfully")
     );
 });
 
+// To get channel videos
 const getChannelVideo = asyncHandler(async (req, res) => {
   const user = req.user?._id;
 
