@@ -37,6 +37,7 @@ import VideoRouter from "./routes/Video.routes.js";
 import TournamentRouter from "./routes/Tournament.routes.js";
 import { errorHandler } from "./middlewares/Error.middleware.js";
 import DashboardRouter from "./routes/Dashboard.routes.js";
+import CommentRouter from "./routes/Comment.routes.js";
 // Routes declaration
 app.use("/api/users", UserRouter);
 app.use("/api/post", PostRouter);
@@ -46,5 +47,6 @@ app.use("/api/videos", VideoRouter);
 app.use("/api/tournament", TournamentRouter);
 app.use(errorHandler);
 app.use("/api/dashboard", DashboardRouter);
+app.use("/api/comment", CommentRouter);
 
 export { app };

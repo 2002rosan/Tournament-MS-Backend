@@ -7,7 +7,6 @@ import {
   removeFileFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/Cloudinary.js";
-import fs from "fs";
 
 // To get/fetch all videos and its data from DB
 const getAllVideo = asyncHandler(async (req, res, next) => {
