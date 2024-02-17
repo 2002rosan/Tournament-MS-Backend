@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Post } from "../models/post.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
@@ -19,37 +20,138 @@ const createPost = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, data, "Post tweeted"));
 });
 
-// Get all posts of a specific user
+// Get posts by userId of a specific user
 const getUserPosts = asyncHandler(async (req, res) => {
-  const userId = req.user?._id;
+  const { userId } = req.params;
 
-  const data = await Post.aggregate([
+  if (!userId) throw new apiError(400, "Invalid userId");
+
+  const posts = await Post.aggregate([
     {
       $match: {
-        owner: userId,
+        owner: new mongoose.Types.ObjectId(userId),
       },
     },
     {
       $lookup: {
         from: "users",
-        localField: "owner",
         foreignField: "_id",
-        as: "userPosts",
+        localField: "owner",
+        as: "Owner",
+
+        pipeline: [
+          {
+            $project: {
+              userName: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "post",
+        as: "likedPosts",
+
+        pipeline: [
+          {
+            $project: {
+              likedBy: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        likeCount: {
+          $size: "$likedPosts",
+        },
+        ownerDetails: {
+          $arrayElemAt: ["$Owner", 0],
+        },
       },
     },
     {
       $project: {
-        _id: 0,
         content: 1,
-        "userPosts.userName": 1,
+        ownerDetails: 1,
+        likeCount: 1,
+        createdAt: 1,
       },
     },
   ]);
-  if (!data) throw new apiError(500, "Error fetching posts");
+  if (!posts) throw new apiError(500, "Error fetching posts");
 
   return res
     .status(200)
-    .json(new apiResponse(200, data, "Posts fetched successfully"));
+    .json(new apiResponse(200, posts, "Posts fetched successfully"));
+});
+
+// Get all posts
+const getAllPosts = asyncHandler(async (req, res) => {
+  const posts = await Post.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        foreignField: "_id",
+        localField: "owner",
+        as: "Owner",
+
+        pipeline: [
+          {
+            $project: {
+              userName: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "post",
+        as: "likedPosts",
+
+        pipeline: [
+          {
+            $project: {
+              likedBy: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        likeCount: {
+          $size: "$likedPosts",
+        },
+        ownerDetails: {
+          $arrayElemAt: ["$Owner", 0],
+        },
+      },
+    },
+    {
+      $project: {
+        content: 1,
+        ownerDetails: 1,
+        likeCount: 1,
+        createdAt: 1,
+      },
+    },
+  ]);
+
+  if (!posts) throw new apiError(500, "Error fetching posts");
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, posts, "Posts fetched successfully"));
 });
 
 // Update post or tweet
@@ -87,4 +189,4 @@ const deletePost = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, {}, "Post deleted"));
 });
 
-export { createPost, getUserPosts, updatePost, deletePost };
+export { createPost, getUserPosts, getAllPosts, updatePost, deletePost };

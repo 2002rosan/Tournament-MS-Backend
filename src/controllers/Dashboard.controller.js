@@ -32,23 +32,8 @@ const getProfileStats = asyncHandler(async (req, res) => {
     },
   ]);
 
-  // Total video views
-  const totalVideoViews = await Video.aggregate([
-    {
-      $match: {
-        ownerId: new mongoose.Types.ObjectId(userId),
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        ownerId: 0,
-      },
-    },
-  ]);
-
   // Total likes per video
-  const totalLikes = await Video.aggregate([
+  const [totalLikes] = await Video.aggregate([
     {
       $match: {
         ownerId: new mongoose.Types.ObjectId(userId),
@@ -77,17 +62,12 @@ const getProfileStats = asyncHandler(async (req, res) => {
     },
   ]);
 
-  if (totalLikes.length === 0) throw new apiError(404, "No likes in the video");
-  if (totalVideos.length === 0) throw new apiError(404, "No videos found");
-  if (totalVideoViews.length === 0)
-    throw new apiError(404, "No videos found to get views");
-
   return res
     .status(200)
     .json(
       new apiResponse(
         200,
-        [countFollower, totalVideos, totalLikes, totalVideoViews],
+        [countFollower, totalVideos, totalLikes],
         "Profile stats fetched successfully"
       )
     );
