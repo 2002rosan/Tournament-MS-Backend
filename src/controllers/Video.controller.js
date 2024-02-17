@@ -112,16 +112,109 @@ const deleteVideo = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, {}, "Video deleted successfully"));
 });
 
-// Video details
-const getVideoDetails = asyncHandler(async (req, res) => {
+// Video by video id
+const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   if (!videoId) throw new apiError(404, "No video found");
 
-  const video = await Video.findById({ _id: videoId });
+  const video = await Video.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "video",
+        as: "Likes",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "ownerId",
+        foreignField: "_id",
+        as: "Owner",
+        pipeline: [
+          {
+            $lookup: {
+              from: "followers",
+              localField: "_id",
+              foreignField: "channel",
+              as: "followers",
+            },
+          },
+          {
+            $addFields: {
+              followersCount: {
+                $size: "$followers",
+              },
+              isFollowed: {
+                $cond: {
+                  if: {
+                    $in: [req.user?._id, "$followers.follower"],
+                  },
+                  then: true,
+                  else: false,
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              userName: 1,
+              avatar: 1,
+              followersCount: 1,
+              isFollowed: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        likesCount: {
+          $size: "$Likes",
+        },
+        owner: {
+          $first: "$Owner",
+        },
+        isLikes: {
+          $cond: {
+            if: {
+              $in: [req.user?._id, "$Likes.likedBy"],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        videoFile: 1,
+        owner: 1,
+        title: 1,
+        description: 1,
+        views: 1,
+        createdAt: 1,
+        duration: 1,
+        comments: 1,
+        likesCount: 1,
+        isLiked: 1,
+      },
+    },
+  ]);
 
+  if (!video) throw new apiError(404, "No video found");
+
+  // Increment the video count by 1
+  await Video.findByIdAndUpdate(videoId, { $inc: { views: 1 } });
   return res
     .status(200)
-    .json(new apiResponse(200, video, "Video Details fetched successfully"));
+    .json(new apiResponse(200, video[0], "Video Details fetched successfully"));
 });
 
 // Update video
@@ -172,7 +265,7 @@ export {
   getAllVideo,
   publishVideo,
   deleteVideo,
-  getVideoDetails,
+  getVideoById,
   updateVideo,
   togglePublishStatus,
 };
