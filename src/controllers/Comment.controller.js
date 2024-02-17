@@ -18,7 +18,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
   const comments = await Comment.aggregate([
     {
       $match: {
-        owner: new mongoose.Types.ObjectId(videoId),
+        video: new mongoose.Types.ObjectId(videoId),
       },
     },
     {
@@ -26,62 +26,35 @@ const getVideoComments = asyncHandler(async (req, res) => {
         from: "users",
         foreignField: "_id",
         localField: "owner",
-        as: "Owner",
-      },
-    },
-    {
-      $lookup: {
-        from: "likes",
-        foreignField: "comment",
-        localField: "_id",
-        as: "likes",
+        as: "userName",
       },
     },
     {
       $addFields: {
-        likesCount: {
-          $size: "$likes",
-        },
-        owner: {
-          $first: "$Owner",
-        },
-        isLikes: {
-          $cond: {
-            if: {
-              $in: [req.user?._id, "$likes.likedBy"],
-            },
-            then: true,
-            else: false,
-          },
+        userName: {
+          $first: "$userName",
         },
       },
     },
     {
       $project: {
         content: 1,
-        createdAt: 1,
-        likesCount: 1,
-        owner: {
-          userName: 1,
-          avatar: 1,
-        },
-        isLiked: 1,
+        "userName.userName": 1,
+        "userName.avatar": 1,
+        "userName.createdAt": 1,
       },
+    },
+    {
+      $skip: (page - 1) * limit,
+    },
+    {
+      $limit: 10,
     },
   ]);
 
-  const options = {
-    page: parseInt(page, 10),
-    limit: parseInt(limit, 10),
-  };
-
-  const comment = await Comment.aggregatePaginate(comments, options);
-
-  if (!comment) throw new apiError(404, "Comments not found");
-
   return res
     .status(200)
-    .json(new apiResponse(200, comment, "Comments fetched"));
+    .json(new apiResponse(200, comments, "Comments fetched"));
 });
 
 // To add a comment to a specific video
