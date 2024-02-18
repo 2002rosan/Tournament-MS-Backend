@@ -1,3 +1,4 @@
+import { Game } from "../models/game.model.js";
 import { Tournament } from "../models/tournament.model.js";
 import {
   uploadOnCloudinary,
@@ -9,7 +10,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // To create or organize tournament
 const createTournament = asyncHandler(async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, gameId } = req.body;
+
+  // Check if gameId is valid
+  const gameExists = await Game.exists({ _id: gameId });
+  if (!gameExists) throw new apiError(400, "Invalid Game Id");
 
   const banner = req.files?.banner?.[0]?.path;
   if (!banner) throw new apiError(400, "Tournament image is required");
@@ -25,9 +30,20 @@ const createTournament = asyncHandler(async (req, res) => {
     owner,
     title,
     description,
+    game: gameId,
   });
 
-  const tournamentData = await Tournament.findOne(tournament._id);
+  await Game.findByIdAndUpdate(
+    gameId,
+    {
+      $push: { tournaments: tournament._id },
+    },
+    { new: true }
+  );
+
+  const tournamentData = await Tournament.findById(tournament._id).populate(
+    "owner game"
+  );
   if (!tournamentData) throw new apiError(500, "Internal server error");
 
   return res

@@ -19,6 +19,18 @@ const gameSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    tournaments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Tournament",
+      },
+    ],
   },
   { timestamps: true }
 );

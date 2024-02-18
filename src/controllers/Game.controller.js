@@ -23,7 +23,10 @@ const createGame = asyncHandler(async (req, res) => {
     owner,
   });
 
-  const gameData = await Game.findOne(game._id);
+  game.followers.push(owner);
+  await game.save();
+
+  const gameData = await Game.findById(game._id).populate("owner followers");
   if (!gameData) throw new apiError(500, "Server error");
 
   return res.status(200).json(new apiResponse(200, gameData, "Game created"));
