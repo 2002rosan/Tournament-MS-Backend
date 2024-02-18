@@ -38,6 +38,7 @@ import TournamentRouter from "./routes/Tournament.routes.js";
 import { errorHandler } from "./middlewares/Error.middleware.js";
 import DashboardRouter from "./routes/Dashboard.routes.js";
 import CommentRouter from "./routes/Comment.routes.js";
+import UserFollower from "./routes/Follower.routes.js";
 // Routes declaration
 app.use("/api/users", UserRouter);
 app.use("/api/post", PostRouter);
@@ -48,5 +49,6 @@ app.use("/api/tournament", TournamentRouter);
 app.use(errorHandler);
 app.use("/api/dashboard", DashboardRouter);
 app.use("/api/comment", CommentRouter);
+app.use("/api/follower", UserFollower);
 
 export { app };
