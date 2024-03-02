@@ -98,7 +98,7 @@ const loginUser = asyncHandler(async (req, res) => {
   // req data from body
   const { email, password, userName } = req.body;
 
-  if (!email && !password) {
+  if (!(email || userName) && !password) {
     throw new apiError(400, "Please provide email or username");
   }
 
@@ -145,7 +145,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
 // Logout user
 const logoutUser = asyncHandler(async (req, res) => {
-  console.log("Logout vayo");
   User.findByIdAndUpdate(
     req.user._id,
     {
@@ -272,7 +271,7 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findById(req.user?._id);
-  isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
 
   if (!isPasswordCorrect) {
     throw new apiError(400, "Your oldpassword is invalid");
@@ -409,7 +408,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     );
 });
 
-// Includes MongoDB pipelines
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { userName } = req.params;
 

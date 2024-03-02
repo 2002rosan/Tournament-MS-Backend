@@ -10,7 +10,7 @@ import {
 
 const router = Router();
 
-router.route("/").get(verifyJWT, getAllPosts);
+router.route("/").get(getAllPosts);
 router.route("/create-post").post(verifyJWT, createPost);
 router.route("/getPosts/:userId").get(verifyJWT, getUserPosts);
 router.route("/update-post/:postId").patch(verifyJWT, updatePost);
