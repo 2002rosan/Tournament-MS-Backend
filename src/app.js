@@ -4,9 +4,11 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
+const BASE_URL = process.env.BASE_URL;
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: BASE_URL,
     credentials: true,
   })
 );
