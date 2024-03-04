@@ -15,7 +15,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    const user = await User.findById(decodedToken?._id).select(
+    const user = await User.findById(decodedToken?.id).select(
       "-password -refreshToken"
     );
 
@@ -27,5 +27,12 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     next();
   } catch (error) {
     throw new apiError(401, error?.message || "Invalid access token");
+  }
+});
+
+export const checkAdmin = asyncHandler(async (req, res, next) => {
+  if (req.user?.role === "admin") next();
+  else {
+    throw new apiError(402, "You are not authorized");
   }
 });

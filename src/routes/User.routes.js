@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/Multer.middleware.js";
-import { verifyJWT } from "../middlewares/Auth.middleware.js";
+import { checkAdmin, verifyJWT } from "../middlewares/Auth.middleware.js";
 import {
   loginUser,
   logoutUser,
@@ -13,6 +13,7 @@ import {
   updateUserCoverImage,
   getUserChannelProfile,
   checkRole,
+  chnageRole,
 } from "../controllers/User.controller.js";
 
 const router = Router();
@@ -56,5 +57,7 @@ router
   .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 
 router.route("/c/:userName").get(verifyJWT, getUserChannelProfile);
+
+router.route("/update-role/:id").patch(verifyJWT, checkAdmin, chnageRole);
 
 export default router;

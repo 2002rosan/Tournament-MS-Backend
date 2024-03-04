@@ -29,68 +29,73 @@ const generateAccessAndRefreshToken = async (userDetail) => {
 };
 
 // Register User
-const registerUser = asyncHandler(async (req, res) => {
-  // Get user details from frontend
-  const { fullName, email, userName, password, role } = req.body;
-  // Validation
-  if (
-    [fullName, email, userName, password].some((field) => field?.trim() === "")
-  ) {
-    throw new apiError(400, "Please fill all the fields");
-  }
-  // Check if user already exists
-  const existingUser = await User.findOne({
-    $or: [{ userName }, { email }],
-  });
-  if (existingUser) {
-    throw new apiError(409, `The user ${userName} already exists`);
-  }
-  // Check for images & avatar
+const registerUser = asyncHandler(async (req, res, next) => {
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
   let coverImageLocalPath;
-  if (
-    req.files &&
-    Array.isArray(req.files.coverImage) &&
-    req.files.coverImage.length > 0
-  ) {
-    coverImageLocalPath = req.files.coverImage[0].path;
-  }
-  if (!avatarLocalPath) {
-    throw new apiError(400, "Please upload an avatar");
-  }
-  // Upload them to cloudinary
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-  fs.unlinkSync(avatarLocalPath);
-  if (coverImageLocalPath) fs.unlinkSync(coverImageLocalPath);
+  const { fullName, email, userName, password } = req.body;
+  try {
+    // Get user details from frontend
+    // Validation
+    if (
+      [fullName, email, userName, password].some(
+        (field) => field?.trim() === ""
+      )
+    ) {
+      throw new apiError(400, "Please fill all the fields");
+    }
+    if (
+      req.files &&
+      Array.isArray(req.files.coverImage) &&
+      req.files.coverImage.length > 0
+    ) {
+      coverImageLocalPath = req.files.coverImage[0].path;
+    }
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [{ userName }, { email }],
+    });
+    if (existingUser) {
+      throw new apiError(409, `The user ${email} already exists`);
+    }
+    // Check for images & avatar
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    if (!avatarLocalPath) {
+      throw new apiError(400, "Please upload an avatar");
+    }
+    // Upload them to cloudinary
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    // fs.unlinkSync(avatarLocalPath);
+    // if (coverImageLocalPath) fs.unlinkSync(coverImageLocalPath);
 
-  if (!avatar) {
-    throw new apiError(400, "Avatar file is required");
-  }
-  // Create user object to create entry in DB
-  const user = await User.create({
-    fullName,
-    avatar: avatar.url,
-    coverImage: coverImage?.url || "",
-    email,
-    password,
-    userName: userName.toLowerCase(),
-    role,
-  });
+    if (!avatar) {
+      throw new apiError(400, "Avatar file is required");
+    }
+    // Create user object to create entry in DB
+    const user = await User.create({
+      fullName,
+      avatar: avatar.url,
+      coverImage: coverImage?.url || "",
+      email,
+      password,
+      userName: userName.toLowerCase(),
+    });
 
-  const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
-  if (!createdUser) {
-    throw new apiError(500, "Something went wrong while registering user");
+    const createdUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+    if (!createdUser) {
+      throw new apiError(500, "Something went wrong while registering user");
+    }
+    return res
+      .status(201)
+      .json(new apiResponse(200, createdUser, "User registered successfully"));
+  } catch (error) {
+    next(error);
+  } finally {
+    fs.unlinkSync(avatarLocalPath);
+    fs.unlinkSync(coverImageLocalPath);
   }
-  return res
-    .status(201)
-    .json(new apiResponse(200, createdUser, "User registered successfully"));
-  // Remove password and refresh token field from response
-  // Check for user creation
-  // return response
 });
 
 // Login User
@@ -347,7 +352,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   // removing old avatar from cloudinary
   await removeFileFromCloudinary(oldAvatar);
-  fs.unlinkSync(avatarLocalPath);
 
   return res
     .status(200)
@@ -399,7 +403,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   if (oldCoverImage.length > 0) {
     removeFileFromCloudinary(oldCoverImage);
   }
-  fs.unlinkSync(newCoverImage);
 
   return res
     .status(200)
@@ -479,6 +482,33 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
+// Chnage role
+const chnageRole = asyncHandler(async (req, res, next) => {
+  try {
+    const currentUserId = req.user?.id;
+    const userId = req.params.id;
+    const { newRole } = req.body;
+
+    if (!newRole) {
+      throw new apiError(401, "Role is required!");
+    }
+
+    if (currentUserId === userId)
+      throw new apiError(500, "You cannot change your own role");
+
+    const updatedRole = await User.findByIdAndUpdate(
+      userId,
+      { role: newRole },
+      { new: true, runValidators: true }
+    );
+    return res
+      .status(200)
+      .json({ data: updatedRole, message: "Successfully role updated" });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export {
   registerUser,
   loginUser,
@@ -490,4 +520,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelProfile,
+  chnageRole,
 };
