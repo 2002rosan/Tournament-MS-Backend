@@ -13,7 +13,7 @@ import {
   updateUserCoverImage,
   getUserChannelProfile,
   checkRole,
-  chnageRole,
+  changeRole,
 } from "../controllers/User.controller.js";
 
 const router = Router();
@@ -32,6 +32,11 @@ router.route("/register").post(
   ]),
   registerUser
 );
+
+// To keep user loggedin
+router.get("/verify-user", verifyJWT, (req, res) => {
+  return res.status(200).json({ data: req.user });
+});
 
 // Login route
 router.route("/login").post(loginUser);
@@ -58,6 +63,6 @@ router
 
 router.route("/c/:userName").get(verifyJWT, getUserChannelProfile);
 
-router.route("/update-role/:id").patch(verifyJWT, checkAdmin, chnageRole);
+router.route("/update-role/:id").patch(verifyJWT, checkAdmin, changeRole);
 
 export default router;

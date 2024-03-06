@@ -130,17 +130,25 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   // sending cookies
-  const options = {
+  const accessTokenOptions = {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    maxAge: 24 * 60 * 60 * 1000,
+    // maxAge: 24 * 60 * 60 * 1000,
+    maxAge: process.env.ACCESS_TOKEN_EXPIRY,
+  };
+  const refreshTokenOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    // maxAge: 24 * 60 * 60 * 1000,
+    maxAge: process.env.REFERESH_TOKEN_EXPIRY,
   };
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, accessTokenOptions)
+    .cookie("refreshToken", refreshToken, refreshTokenOptions)
     .json({
       statusCode: 200,
       user: loggedInUser,
@@ -485,7 +493,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 });
 
 // Chnage role
-const chnageRole = asyncHandler(async (req, res, next) => {
+const changeRole = asyncHandler(async (req, res, next) => {
   try {
     const currentUserId = req.user?.id;
     const userId = req.params.id;
@@ -522,5 +530,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelProfile,
-  chnageRole,
+  changeRole,
 };
