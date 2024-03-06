@@ -112,12 +112,12 @@ const loginUser = asyncHandler(async (req, res) => {
   });
   // check if user exists
   if (!user) {
-    throw new apiError(404, "User doesnot exist");
+    throw new apiError(404, "1:User doesnot exist");
   }
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new apiError(401, "Invalid user credentials");
+    throw new apiError(401, "2:Invalid user credentials");
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken({
@@ -278,18 +278,18 @@ export function checkRole(role) {
 const changePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword, confirmPassword } = req.body;
 
+  const user = await User.findById(req.user?.id);
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new apiError(401, "Your oldpassword is invalid");
+  }
+
   if (!(newPassword === confirmPassword)) {
     throw new apiError(
       400,
       "Your new password and confirm password does not match"
     );
-  }
-
-  const user = await User.findById(req.user?._id);
-  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
-
-  if (!isPasswordCorrect) {
-    throw new apiError(400, "Your oldpassword is invalid");
   }
 
   user.password = newPassword;

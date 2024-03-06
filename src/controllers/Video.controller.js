@@ -31,6 +31,8 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
     queryOption.$text = { $search: title };
   }
 
+  // 1h 2h 3h
+
   const getVideo = queryOption ? Video.find(queryOption) : Video.find();
   try {
     const data = await getVideo
