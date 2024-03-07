@@ -1,3 +1,4 @@
+import { EmailVerification } from "../models/emailVerification.model.js";
 import { User } from "../models/user.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
@@ -6,7 +7,6 @@ import {
   removeFileFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/Cloudinary.js";
-import fs from "fs";
 
 // generate access and refresh tokens
 const generateAccessAndRefreshToken = async (userDetail) => {
@@ -56,7 +56,16 @@ const registerUser = asyncHandler(async (req, res, next) => {
       password,
       userName: userName.toLowerCase(),
     });
-    console.log(user);
+
+    //  Generate tokens for newly created user and send it back as response
+    const code = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, "0");
+
+    await EmailVerification.create({
+      userId: user._id,
+      code,
+    });
 
     return res
       .status(201)
