@@ -7,7 +7,7 @@ import { apiResponse } from "../utils/apiResponse.js";
 
 // To get profile stats
 const getProfileStats = asyncHandler(async (req, res) => {
-  const userId = req.user?._id;
+  const userId = req.user?.id;
 
   // count followers
   const totalFollowers = await Follower.aggregate([
@@ -96,7 +96,7 @@ const getProfileStats = asyncHandler(async (req, res) => {
 
 // To get channel videos
 const getChannelVideo = asyncHandler(async (req, res) => {
-  const user = req.user?._id;
+  const user = req.user?.id;
 
   const videoList = await Video.aggregate([
     {

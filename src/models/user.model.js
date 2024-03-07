@@ -19,6 +19,10 @@ const userSchema = new Schema(
       lowerCase: true,
       trim: true,
     },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
     fullName: {
       type: String,
       required: true,
@@ -27,7 +31,6 @@ const userSchema = new Schema(
     },
     avatar: {
       type: String,
-      required: true,
     },
     coverImage: {
       type: String,

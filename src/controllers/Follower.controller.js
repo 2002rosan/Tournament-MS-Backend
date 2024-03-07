@@ -10,7 +10,7 @@ const toggleFollow = asyncHandler(async (req, res) => {
   if (!isValidObjectId(channelId)) throw new apiError(400, "Invalid channelId");
 
   const isFollowed = await Follower.findOne({
-    follower: req.user?._id,
+    follower: req.user?.id,
     channel: channelId,
   });
 
@@ -23,7 +23,7 @@ const toggleFollow = asyncHandler(async (req, res) => {
   }
 
   await Follower.create({
-    follower: req.user?._id,
+    follower: req.user?.id,
     channel: channelId,
   });
 

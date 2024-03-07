@@ -24,7 +24,7 @@ const createTournament = asyncHandler(async (req, res) => {
   if (!uploadGameBannerOnCloudinary)
     throw new apiError(500, "Failed to upload game banner on Cloudinary");
 
-  const owner = req.user?._id;
+  const owner = req.user?.id;
   const tournament = await Tournament.create({
     banner: uploadGameBannerOnCloudinary.url,
     owner,

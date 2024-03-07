@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 // To create post / tweet
 const createPost = asyncHandler(async (req, res) => {
   const { postData } = req.body;
-  const userId = req.user?._id;
+  const userId = req.user?.id;
   if (!postData) throw new apiError(404, "Missing Data");
 
   const createPost = await Post.create({

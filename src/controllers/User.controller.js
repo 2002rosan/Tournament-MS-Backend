@@ -30,8 +30,6 @@ const generateAccessAndRefreshToken = async (userDetail) => {
 
 // Register User
 const registerUser = asyncHandler(async (req, res, next) => {
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  let coverImageLocalPath;
   const { fullName, email, userName, password } = req.body;
   try {
     // Get user details from frontend
@@ -43,13 +41,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     ) {
       throw new apiError(400, "Please fill all the fields");
     }
-    if (
-      req.files &&
-      Array.isArray(req.files.coverImage) &&
-      req.files.coverImage.length > 0
-    ) {
-      coverImageLocalPath = req.files.coverImage[0].path;
-    }
+
     // Check if user already exists
     const existingUser = await User.findOne({
       $or: [{ userName }, { email }],
@@ -57,44 +49,20 @@ const registerUser = asyncHandler(async (req, res, next) => {
     if (existingUser) {
       throw new apiError(409, `The user ${email} already exists`);
     }
-    // Check for images & avatar
-    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
-    if (!avatarLocalPath) {
-      throw new apiError(400, "Please upload an avatar");
-    }
-    // Upload them to cloudinary
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-    // fs.unlinkSync(avatarLocalPath);
-    // if (coverImageLocalPath) fs.unlinkSync(coverImageLocalPath);
-
-    if (!avatar) {
-      throw new apiError(400, "Avatar file is required");
-    }
     // Create user object to create entry in DB
     const user = await User.create({
       fullName,
-      avatar: avatar.url,
-      coverImage: coverImage?.url || "",
       email,
       password,
       userName: userName.toLowerCase(),
     });
+    console.log(user);
 
-    const createdUser = await User.findById(user._id).select(
-      "-password -refreshToken"
-    );
-    if (!createdUser) {
-      throw new apiError(500, "Something went wrong while registering user");
-    }
     return res
       .status(201)
-      .json(new apiResponse(200, createdUser, "User registered successfully"));
+      .json(new apiResponse(200, {}, "User registered successfully"));
   } catch (error) {
     next(error);
-  } finally {
-    fs.unlinkSync(avatarLocalPath);
-    fs.unlinkSync(coverImageLocalPath);
   }
 });
 
@@ -117,7 +85,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new apiError(401, "2:Invalid user credentials");
+    throw new apiError(401, "2:Invalid password");
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken({
@@ -161,7 +129,7 @@ const loginUser = asyncHandler(async (req, res) => {
 // Logout user
 const logoutUser = asyncHandler(async (req, res) => {
   User.findByIdAndUpdate(
-    req.user._id,
+    req.user.id,
     {
       $set: {
         refreshToken: undefined,
@@ -318,7 +286,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findByIdAndUpdate(
-    req.user?._id,
+    req.user?.id,
     {
       $set: {
         fullName,
@@ -351,7 +319,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   const oldAvatar = user?.avatar;
 
   const updatedUser = await User.findByIdAndUpdate(
-    req.user?._id,
+    req.user?.id,
     {
       $set: {
         avatar: avatar.url,
@@ -383,7 +351,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   // }
 
   // const user = await User.findByIdAndUpdate(
-  //   req.user?._id,
+  //   req.user?.id,
   //   {
   //     $set: {
   //       coverImage: coverImage.url,
@@ -400,24 +368,27 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   const newCoverImage = req.file?.path;
   if (!newCoverImage) throw new apiError(404, "Cover Image not found");
 
-  const oldCoverImage = user?.coverImage;
-
   const cloudinaryFileURL = await uploadOnCloudinary(newCoverImage);
-  if (!cloudinaryFileURL)
+  if (!cloudinaryFileURL?.url)
     throw new apiError(500, "Error while updating cover image");
 
-  const updatedCoverImageStatus = await User.findByIdAndUpdate(req.user._id, {
+  const data = await User.findByIdAndUpdate(user.id, {
     coverImage: cloudinaryFileURL?.url,
   });
-  if (!updatedCoverImageStatus) throw new apiError(500, "User was not updated");
-  if (oldCoverImage.length > 0) {
-    removeFileFromCloudinary(oldCoverImage);
+
+  if (!data) throw new apiError(500, "User was not updated");
+  if (data?.coverImage) {
+    removeFileFromCloudinary(data.coverImage);
   }
 
   return res
     .status(200)
     .json(
-      new apiResponse(200, { updatedCoverImageStatus }, "Cover imaged updated")
+      new apiResponse(
+        200,
+        { coverImage: cloudinaryFileURL.url },
+        "Cover imaged updated"
+      )
     );
 });
 
@@ -460,7 +431,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         isFollowed: {
           $cond: {
-            if: { $in: [req.user?._id, "$followers.follower"] },
+            if: { $in: [req.user?.id, "$followers.follower"] },
             then: true,
             else: false,
           },

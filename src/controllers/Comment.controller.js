@@ -89,7 +89,7 @@ const addComment = asyncHandler(async (req, res) => {
   const comment = await Comment.create({
     content,
     video: videoId,
-    owner: req.user?._id,
+    owner: req.user?.id,
   });
   if (!comment) throw new apiError(400, "Comment not created");
 

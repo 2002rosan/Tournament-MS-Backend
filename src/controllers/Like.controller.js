@@ -15,7 +15,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
   const likedAlready = await Like.findOne({
     video: videoId,
-    likedBy: req.user?._id,
+    likedBy: req.user?.id,
   });
 
   if (likedAlready) {
@@ -26,7 +26,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
   await Like.create({
     video: videoId,
-    likedBy: req.user?._id,
+    likedBy: req.user?.id,
   });
 
   return res.status(200).json(new apiResponse(200, { isLiked: true }));
@@ -41,7 +41,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
   const likedAlready = await Like.findOne({
     comment: commentId,
-    likedBy: req.user?._id,
+    likedBy: req.user?.id,
   });
 
   if (likedAlready) {
@@ -52,7 +52,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
   await Like.create({
     comment: commentId,
-    likedBy: req.user?._id,
+    likedBy: req.user?.id,
   });
 
   return res.status(200).json(new apiResponse(200, { isLiked: true }));
@@ -67,7 +67,7 @@ const togglePostLike = asyncHandler(async (req, res) => {
 
   const likedAlready = await Like.findOne({
     post: postId,
-    likedBy: req.user?._id,
+    likedBy: req.user?.id,
   });
 
   if (likedAlready) {
@@ -78,7 +78,7 @@ const togglePostLike = asyncHandler(async (req, res) => {
 
   await Like.create({
     post: postId,
-    likedBy: req.user?._id,
+    likedBy: req.user?.id,
   });
 
   return res.status(200).json(new apiResponse(200, { isLiked: true }));

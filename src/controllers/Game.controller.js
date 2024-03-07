@@ -15,7 +15,7 @@ const createGame = asyncHandler(async (req, res) => {
   if (!uploadCoverImageOnCloudinary)
     throw new apiError(500, "Failed to upload on cloudinary");
 
-  const owner = req.user?._id;
+  const owner = req.user?.id;
   const game = await Game.create({
     gameName,
     description,

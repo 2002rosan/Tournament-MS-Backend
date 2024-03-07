@@ -3,7 +3,7 @@ import { Follower } from "../models/follower.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const checkFollowedOrNot = asyncHandler(async (req, _, next) => {
-  let userId = req.user._id;
+  let userId = req.user.id;
   userId = userId.toString();
   const { channelId } = req.params;
 
