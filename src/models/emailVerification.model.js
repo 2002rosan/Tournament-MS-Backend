@@ -22,22 +22,32 @@ const emailVerificationSchema = new Schema(
 );
 
 emailVerificationSchema.pre("save", async function (next) {
-  const code = jwt.sign(
+  const code = Math.floor(Math.random() * 1000000)
+    .toString()
+    .padStart(6, "0");
+
+  this.code = code;
+  // Generate token and save
+  const hashcode = jwt.sign(
     {
       id: this._id,
-      code: this.code,
+      code,
+      email: this.email,
+      userId: this.userId,
     },
     process.env.EMAIL_VERIFICATION_SECRET_CODE,
     {
       expiresIn: process.env.EMAIL_VERIFICATION_CODE_EXPIRY,
     }
   );
-  console.log(["code", code]);
+
+  const emailText = `Click the link to verify your email\n ${process.env.API_URL}/api/users/verify-email?code=${hashcode}`;
+
   const option = {
     to: this.email,
     subject: "TMS Verification code",
-    text: `Your verification code is : ${code}`,
-    html: "<b>Hello World?</b>",
+    text: emailText,
+    // html: `<span>Hello World?</span>`,
   };
   sendEmail(option);
   next();

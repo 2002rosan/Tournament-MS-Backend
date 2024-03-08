@@ -32,8 +32,6 @@ const generateAccessAndRefreshToken = async (userDetail) => {
 const registerUser = asyncHandler(async (req, res, next) => {
   const { fullName, email, userName, password } = req.body;
   try {
-    // Get user details from frontend
-    // Validation
     if (
       [fullName, email, userName, password].some(
         (field) => field?.trim() === ""
@@ -57,14 +55,9 @@ const registerUser = asyncHandler(async (req, res, next) => {
       userName: userName.toLowerCase(),
     });
 
-    //  Generate tokens for newly created user and send it back as response
-    const code = Math.floor(Math.random() * 1000000)
-      .toString()
-      .padStart(6, "0");
-
     await EmailVerification.create({
       userId: user._id,
-      code,
+      email,
     });
 
     return res
@@ -239,8 +232,6 @@ export function checkRole(role) {
   return (req, res, next) => {
     // Assuming user information is stored in req.user
     const user = req;
-    console.log(user);
-
     if (user && user.roles && user.roles.includes(role)) {
       // User has the required role, proceed to the next middleware or route handler
       next();
@@ -304,6 +295,12 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select("-password");
+
+  await EmailVerification.create({
+    userId: user._id,
+    email: user.email,
+  });
+
   return res
     .status(200)
     .json(new apiResponse(200, user, "Account updated successfully"));

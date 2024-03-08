@@ -52,10 +52,9 @@ const publishVideo = asyncHandler(async (req, res, next) => {
 
   try {
     let video;
-    const ownerId = req.user?.id;
+    const ownerId = req.user?._id;
     const videoFile = req.files?.videoFile[0]?.path;
     if (!videoFile) throw new apiError(400, "No file uploaded");
-    console.log(videoFile);
 
     const thumbnail = req.files?.thumbnail?.[0]?.path;
     if (!thumbnail) throw new apiError(400, "Thumbnail not provided");
@@ -155,7 +154,7 @@ const getVideoById = asyncHandler(async (req, res) => {
               isFollowed: {
                 $cond: {
                   if: {
-                    $in: [req.user?.id, "$followers.follower"],
+                    $in: [req.user?._id, "$followers.follower"],
                   },
                   then: true,
                   else: false,
@@ -185,7 +184,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         isLikes: {
           $cond: {
             if: {
-              $in: [req.user?.id, "$Likes.likedBy"],
+              $in: [req.user?._id, "$Likes.likedBy"],
             },
             then: true,
             else: false,

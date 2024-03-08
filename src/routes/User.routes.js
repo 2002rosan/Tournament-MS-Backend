@@ -15,6 +15,10 @@ import {
   checkRole,
   changeRole,
 } from "../controllers/User.controller.js";
+import { apiError } from "../utils/apiError.js";
+import jwt from "jsonwebtoken";
+import { EmailVerification } from "../models/emailVerification.model.js";
+import { User } from "../models/user.model.js";
 
 const router = Router();
 
@@ -36,6 +40,38 @@ router.route("/register").post(
 // To keep user loggedin
 router.get("/verify-user", verifyJWT, (req, res) => {
   return res.status(200).json({ data: req.user });
+});
+
+router.get("/verify-email", async (req, res) => {
+  const { code } = req.query;
+  if (!code) throw new apiError(400, "Verification code is required");
+
+  try {
+    const decodedToken = jwt.verify(
+      code,
+      process.env.EMAIL_VERIFICATION_SECRET_CODE
+    );
+
+    const delete1 = await EmailVerification.findOneAndDelete({
+      $and: [{ code: decodedToken.code }, { userId: decodedToken.userId }],
+    });
+    if (delete1 == null) {
+      return res.send(
+        `<div style=height:100dvh;display:grid;place-content:center; > <p>Token not found</p> </div>`
+      );
+    }
+    await User.findByIdAndUpdate(decodedToken.userId, { emailVerified: true });
+
+    const baseURL = process.env.BASE_URL;
+
+    res.send(
+      `<div style=height:100dvh;display:grid;place-content:center; > <p style=color:green;>Email Verified</p> <a href=${baseURL}/login>Go To TMS</a> </div>`
+    );
+  } catch (error) {
+    res.send(
+      `<div style=height:100dvh;display:grid;place-content:center; > <p style=color:red; >Invalid Link</p> </div>`
+    );
+  }
 });
 
 // Login route

@@ -17,8 +17,10 @@ const sendEmail = async (option) => {
       subject: option.subject, // Subject line
       text: option.text,
     };
+    if (option.html) {
+      mailOption.html = option.html;
+    }
     const info = await transporter.sendMail(mailOption);
-    console.log(info);
     return info;
   } catch (error) {
     console.error(error);

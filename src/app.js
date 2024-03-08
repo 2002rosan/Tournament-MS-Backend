@@ -48,9 +48,9 @@ app.use("/api/like", LikeRouter);
 app.use("/api/game", GameRouter);
 app.use("/api/videos", VideoRouter);
 app.use("/api/tournament", TournamentRouter);
-app.use(errorHandler);
 app.use("/api/dashboard", DashboardRouter);
 app.use("/api/comment", CommentRouter);
 app.use("/api/follower", UserFollower);
+app.use(errorHandler);
 
 export { app };
