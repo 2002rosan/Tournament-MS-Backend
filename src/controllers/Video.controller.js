@@ -13,7 +13,6 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
   const { sortBy, title } = req.query;
   let page = parseInt(req.query?.page) || 1;
   let limit = parseInt(req.query?.limit) || 5;
-  console.log(title);
 
   if (isNaN(page) || isNaN(limit)) {
     throw new apiError(400, "Invalid page or limit");

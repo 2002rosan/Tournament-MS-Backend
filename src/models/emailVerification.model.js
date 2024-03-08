@@ -37,6 +37,7 @@ emailVerificationSchema.pre("save", async function (next) {
     to: this.email,
     subject: "TMS Verification code",
     text: `Your verification code is : ${code}`,
+    html: "<b>Hello World?</b>",
   };
   sendEmail(option);
   next();

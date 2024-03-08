@@ -4,6 +4,7 @@ import { upload } from "../middlewares/Multer.middleware.js";
 import {
   createTournament,
   deleteTournament,
+  getAllTournment,
   updateTournament,
 } from "../controllers/Tournament.controller.js";
 
@@ -19,6 +20,8 @@ router.route("/create-tournament").post(
   ]),
   createTournament
 );
+
+router.route("/").get(getAllTournment);
 
 router
   .route("/update-tournament/:tournamentId")

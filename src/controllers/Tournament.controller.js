@@ -53,6 +53,24 @@ const createTournament = asyncHandler(async (req, res) => {
     );
 });
 
+// To get all tournaments
+const getAllTournment = asyncHandler(async (req, res) => {
+  const tournaments = Tournament.find();
+
+  const data = await tournaments.populate([
+    { path: "game", select: "gameName followers coverImage" },
+  ]);
+
+  if (data.length < 1)
+    return res
+      .status(200)
+      .json(new apiResponse(200, [], "No Tournaments Available"));
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, data, "Tournaments fetched successfully"));
+});
+
 // To update tournament
 const updateTournament = asyncHandler(async (req, res) => {
   const { tournamentId } = req.params;
@@ -96,4 +114,9 @@ const deleteTournament = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, {}, "Tournament deleted"));
 });
 
-export { createTournament, updateTournament, deleteTournament };
+export {
+  createTournament,
+  getAllTournment,
+  updateTournament,
+  deleteTournament,
+};
