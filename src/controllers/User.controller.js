@@ -41,11 +41,13 @@ const registerUser = asyncHandler(async (req, res, next) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ userName }, { email }],
-    });
-    if (existingUser) {
-      throw new apiError(409, `The user ${email} already exists`);
+    const existingUserName = await User.findOne({ userName });
+    if (existingUserName) {
+      throw new apiError(409, `1:${userName} is not available`);
+    }
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      throw new apiError(409, `2:The user already exists`);
     }
     // Create user object to create entry in DB
     const user = await User.create({
