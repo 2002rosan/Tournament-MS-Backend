@@ -1,4 +1,5 @@
 import { EmailVerification } from "../models/emailVerification.model.js";
+import { ResetPassword } from "../models/resetPassword.model.js";
 import { User } from "../models/user.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
@@ -7,6 +8,7 @@ import {
   removeFileFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/Cloudinary.js";
+import jwt from "jsonwebtoken";
 
 // generate access and refresh tokens
 const generateAccessAndRefreshToken = async (userDetail) => {
@@ -70,6 +72,60 @@ const registerUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+const verifyEmail = async (req, res) => {
+  const { code } = req.query;
+  if (!code) return new apiError(400, "Verification code is required");
+
+  try {
+    const decodedToken = jwt.verify(
+      code,
+      process.env.EMAIL_VERIFICATION_SECRET_CODE
+    );
+
+    const delete1 = await EmailVerification.findOneAndDelete({
+      $and: [{ code: decodedToken.code }, { userId: decodedToken.userId }],
+    });
+    if (delete1 == null) {
+      return res.send(
+        `<div style=height:100dvh;display:grid;place-content:center; > <p>Token not found</p> </div>`
+      );
+    }
+    await User.findByIdAndUpdate(decodedToken.userId, { emailVerified: true });
+
+    const baseURL = process.env.BASE_URL;
+
+    res.send(
+      `<div style=height:100dvh;display:grid;place-content:center; > <p style=color:green;>Email Verified</p> <a href=${baseURL}/login>Go To TMS</a> </div>`
+    );
+  } catch (error) {
+    res.send(
+      `<div style=height:100dvh;display:grid;place-content:center; > <p style=color:red; >Invalid Link</p> </div>`
+    );
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      throw new apiError(404, "Please provide an email");
+    }
+
+    const foundUser = await User.findOne({ email });
+    if (!foundUser) {
+      throw new apiError(404, "This email is not registered!");
+    }
+
+    await ResetPassword.create({ email, userId: foundUser._id });
+    // Send reset password link to the user
+    return res
+      .status(200)
+      .json({ message: "Link has been sent to your email!" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Login User
 const loginUser = asyncHandler(async (req, res) => {
   // req data from body
@@ -106,14 +162,12 @@ const loginUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    // maxAge: 24 * 60 * 60 * 1000,
     maxAge: process.env.ACCESS_TOKEN_EXPIRY,
   };
   const refreshTokenOptions = {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    // maxAge: 24 * 60 * 60 * 1000,
     maxAge: process.env.REFERESH_TOKEN_EXPIRY,
   };
 
@@ -346,31 +400,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 // Update user cover image
 const updateUserCoverImage = asyncHandler(async (req, res) => {
-  // const coverImageLocalPath = req.file?.path;
-
-  // if (!coverImageLocalPath) {
-  //   throw new apiError(400, "No cover image provided!");
-  // }
-
-  // const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
-  // if (!coverImage.url) {
-  //   throw new apiError(400, "Error while uploading file on cloudinary");
-  // }
-
-  // const user = await User.findByIdAndUpdate(
-  //   req.user?.id,
-  //   {
-  //     $set: {
-  //       coverImage: coverImage.url,
-  //     },
-  //   },
-  //   { new: true }
-  // ).select("-password");
-
-  // return res
-  //   .status(200)
-  //   .json(new apiResponse(200, user, "Cover image updated successfully"));
   const user = req.user;
 
   const newCoverImage = req.file?.path;
@@ -510,4 +539,6 @@ export {
   updateUserCoverImage,
   getUserChannelProfile,
   changeRole,
+  verifyEmail,
+  resetPassword,
 };
