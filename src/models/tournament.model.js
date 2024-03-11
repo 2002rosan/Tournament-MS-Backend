@@ -23,6 +23,32 @@ const tournamentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Game",
     },
+    schedule: {
+      registration: {
+        start: Date,
+        end: Date,
+      },
+      matches: {
+        start: Date,
+        end: Date,
+      },
+    },
+    result: {
+      first: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      second: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      third: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    },
+    playerLimit: Number,
+    players: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );

@@ -10,48 +10,59 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // To create or organize tournament
 const createTournament = asyncHandler(async (req, res) => {
-  const { title, description, gameId } = req.body;
+  const { title, description, game, schedule, playerLimit } = req.body;
 
   // Check if gameId is valid
-  const gameExists = await Game.exists({ _id: gameId });
+  const gameExists = await Game.exists({ _id: game });
   if (!gameExists) throw new apiError(400, "Invalid Game Id");
 
-  const banner = req.files?.banner?.[0]?.path;
-  if (!banner) throw new apiError(400, "Tournament image is required");
+  // const banner = req.files?.banner?.[0]?.path;
+  // if (!banner) throw new apiError(400, "Tournament image is required");
+
+  if (!schedule) throw new apiError(400, "Schedule is required");
+  if (!playerLimit) throw new apiError(400, "Player limit is required");
 
   //   Upload image in cloudinary
-  const uploadGameBannerOnCloudinary = await uploadOnCloudinary(banner);
-  if (!uploadGameBannerOnCloudinary)
-    throw new apiError(500, "Failed to upload game banner on Cloudinary");
+  // const uploadGameBannerOnCloudinary = await uploadOnCloudinary(banner);
+  // if (!uploadGameBannerOnCloudinary)
+  //   throw new apiError(500, "Failed to upload game banner on Cloudinary");
 
   const owner = req.user?.id;
   const tournament = await Tournament.create({
-    banner: uploadGameBannerOnCloudinary.url,
+    // banner: uploadGameBannerOnCloudinary.url,
+    banner: "1223",
     owner,
     title,
     description,
-    game: gameId,
+    game,
+    schedule,
+    playerLimit,
   });
-
-  await Game.findByIdAndUpdate(
-    gameId,
-    {
-      $push: { tournaments: tournament._id },
-    },
-    { new: true }
-  );
-
-  const tournamentData = await Tournament.findById(tournament._id).populate(
-    "owner game"
-  );
-  if (!tournamentData) throw new apiError(500, "Internal server error");
 
   return res
     .status(200)
-    .json(
-      new apiResponse(200, tournamentData, "Tournament created successfully")
-    );
+    .json(new apiResponse(200, tournament, "Tournament created successfully"));
 });
+
+const joinTournament = async (req, res, next) => {
+  const { tournamentId } = req.params;
+  try {
+    const tournament = await Tournament.findById(tournamentId);
+    if (!tournament) throw new apiError(401, "Tournament does not exists");
+
+    const registrationEndDate = new Date(tournament.schedule.registration.end);
+    const presentDate = new Date();
+    if (presentDate > registrationEndDate)
+      throw new apiError(400, "Registration closed");
+
+    tournament.players.push(req.user?.id);
+    await tournament.save();
+
+    return res.status(200).json({ message: "Tournament joined successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // To get all tournaments
 const getAllTournment = asyncHandler(async (req, res) => {
@@ -59,6 +70,7 @@ const getAllTournment = asyncHandler(async (req, res) => {
 
   const data = await tournaments.populate([
     { path: "game", select: "gameName followers coverImage" },
+    { path: "players", select: "userName avatar" },
   ]);
 
   if (data.length < 1)
@@ -119,4 +131,5 @@ export {
   getAllTournment,
   updateTournament,
   deleteTournament,
+  joinTournament,
 };
