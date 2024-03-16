@@ -30,8 +30,6 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
     queryOption.$text = { $search: title };
   }
 
-  // 1h 2h 3h
-
   const getVideo = queryOption ? Video.find(queryOption) : Video.find();
   try {
     const data = await getVideo
@@ -52,7 +50,7 @@ const publishVideo = asyncHandler(async (req, res, next) => {
 
   try {
     let video;
-    const ownerId = req.user?._id;
+    const ownerId = req.user?.id;
     const videoFile = req.files?.videoFile[0]?.path;
     if (!videoFile) throw new apiError(400, "No file uploaded");
 

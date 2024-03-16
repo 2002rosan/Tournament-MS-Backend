@@ -500,7 +500,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
-// Chnage role
+// Change role
 const changeRole = asyncHandler(async (req, res, next) => {
   try {
     const currentUserId = req.user?.id;
@@ -527,6 +527,33 @@ const changeRole = asyncHandler(async (req, res, next) => {
   }
 });
 
+const deleteUser = asyncHandler(async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    console.log(userId);
+
+    const findUser = await User.deleteMany({ _id: userId });
+    console.log(findUser);
+    if (!findUser) {
+      throw new apiError(404, "User not found");
+    }
+
+    return res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+const getAllUser = asyncHandler(async (req, res, next) => {
+  try {
+    const currentUser = req.user?.id;
+    const users = await User.find({ _id: { $ne: currentUser } });
+    return res.status(200).json(new apiResponse(200, users, "Users fetched"));
+  } catch (error) {
+    next(error);
+  }
+});
+
 export {
   registerUser,
   loginUser,
@@ -541,4 +568,6 @@ export {
   changeRole,
   verifyEmail,
   resetPassword,
+  deleteUser,
+  getAllUser,
 };

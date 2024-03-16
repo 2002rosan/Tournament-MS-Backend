@@ -15,6 +15,8 @@ import {
   changeRole,
   resetPassword,
   verifyEmail,
+  deleteUser,
+  getAllUser,
 } from "../controllers/User.controller.js";
 import { apiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
@@ -93,5 +95,11 @@ router
 router.route("/c/:userName").get(verifyJWT, getUserChannelProfile);
 
 router.route("/update-role/:id").patch(verifyJWT, checkAdmin, changeRole);
+
+// Delete user as admin
+router.route("/delete-user").delete(verifyJWT, checkAdmin, deleteUser);
+
+// Get all user details
+router.route("/getAllUser").get(verifyJWT, checkAdmin, getAllUser);
 
 export default router;
