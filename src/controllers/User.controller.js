@@ -72,6 +72,22 @@ const registerUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+const resendVerification = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  try {
+    if (!email) throw new apiError(400, "Please provide email");
+
+    const Email = await EmailVerification.findOne({ email });
+    if (!Email) throw new apiError(404, "Email not found");
+
+    return res
+      .status(200)
+      .json(new apiResponse(200, {}, "Verification link sent"));
+  } catch (error) {
+    next(error);
+  }
+});
+
 const verifyEmail = async (req, res) => {
   const { code } = req.query;
   if (!code) return new apiError(400, "Verification code is required");
@@ -570,4 +586,5 @@ export {
   resetPassword,
   deleteUser,
   getAllUser,
+  resendVerification,
 };
