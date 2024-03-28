@@ -1,6 +1,10 @@
+import { Comment } from "../models/comment.model.js";
 import { EmailVerification } from "../models/emailVerification.model.js";
+import { Post } from "../models/post.model.js";
 import { ResetPassword } from "../models/resetPassword.model.js";
+import { Tournament } from "../models/tournament.model.js";
 import { User } from "../models/user.model.js";
+import { Video } from "../models/video.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -74,15 +78,16 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
 const resendVerification = asyncHandler(async (req, res, next) => {
   const { email } = req.body;
+  const userId = req.user.Id;
   try {
     if (!email) throw new apiError(400, "Please provide email");
 
-    const Email = await EmailVerification.findOne({ email });
+    const Email = await EmailVerification.create({ userId, email });
     if (!Email) throw new apiError(404, "Email not found");
 
     return res
       .status(200)
-      .json(new apiResponse(200, {}, "Verification link sent"));
+      .json(new apiResponse(200, {}, `Verification link was sent to ${email}`));
   } catch (error) {
     next(error);
   }
@@ -546,13 +551,7 @@ const changeRole = asyncHandler(async (req, res, next) => {
 const deleteUser = asyncHandler(async (req, res, next) => {
   try {
     const { userId } = req.body;
-    console.log(userId);
-
-    const findUser = await User.deleteMany({ _id: userId });
-    console.log(findUser);
-    if (!findUser) {
-      throw new apiError(404, "User not found");
-    }
+    await User.deleteOne({ _id: userId });
 
     return res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
@@ -562,9 +561,12 @@ const deleteUser = asyncHandler(async (req, res, next) => {
 
 const getAllUser = asyncHandler(async (req, res, next) => {
   try {
-    const currentUser = req.user?.id;
-    const users = await User.find({ _id: { $ne: currentUser } });
-    return res.status(200).json(new apiResponse(200, users, "Users fetched"));
+    const users = await User.find();
+    return res
+      .status(200)
+      .json(
+        new apiResponse(200, { count: users.length, users }, "Users fetched")
+      );
   } catch (error) {
     next(error);
   }

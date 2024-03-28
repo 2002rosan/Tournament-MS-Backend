@@ -17,6 +17,7 @@ import {
   verifyEmail,
   deleteUser,
   getAllUser,
+  resendVerification,
 } from "../controllers/User.controller.js";
 import { apiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
@@ -68,6 +69,8 @@ router.post("/verify-password", async (req, res, next) => {
 });
 
 router.route("/verify-email").get(verifyEmail);
+
+router.route("/resend-verification").post(verifyJWT, resendVerification);
 
 // Login route
 router.route("/login").post(loginUser);
