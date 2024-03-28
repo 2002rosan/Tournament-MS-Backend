@@ -46,4 +46,9 @@ resetPWSchema.pre("save", async function (next) {
   next();
 });
 
+resetPWSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: process.env.RESET_PASSWORD_EXPIRY }
+);
+
 export const ResetPassword = mongoose.model("ResetPassword", resetPWSchema);

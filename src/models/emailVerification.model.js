@@ -53,6 +53,8 @@ emailVerificationSchema.pre("save", async function (next) {
   next();
 });
 
+emailVerificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 604800 });
+
 export const EmailVerification = mongoose.model(
   "EmailVerification",
   emailVerificationSchema

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { Tournament } from "./tournament.model.js";
 
 const gameSchema = new mongoose.Schema(
   {
@@ -19,20 +20,23 @@ const gameSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    followers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    tournaments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Tournament",
-      },
-    ],
+    // followers: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    //   },
+    // ],
   },
   { timestamps: true }
+);
+
+gameSchema.pre(
+  "deleteOne",
+  { document: false, query: true },
+  async function () {
+    const doc = await this.model.findOne(this.getFilter());
+    await Tournament.updateMany({ game: doc._id }, { $unset: { game: "" } });
+  }
 );
 
 gameSchema.plugin(mongooseAggregatePaginate);
