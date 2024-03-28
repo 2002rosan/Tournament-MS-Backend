@@ -77,7 +77,9 @@ userSchema.pre(
     await Video.deleteMany({ ownerId: doc._id });
     await Post.deleteMany({ owner: doc._id });
     await Like.deleteMany({ likedBy: doc._id });
-    await Follower.deleteMany({ follower: doc._id });
+    await Follower.deleteMany({
+      $or: [{ follower: doc._id }, { channel: doc._id }],
+    });
   }
 );
 
