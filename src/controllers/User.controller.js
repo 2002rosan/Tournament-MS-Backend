@@ -111,7 +111,11 @@ const verifyEmail = async (req, res) => {
         `<div style=height:100dvh;display:grid;place-content:center; > <p>Token not found</p> </div>`
       );
     }
-    await User.findByIdAndUpdate(decodedToken.userId, { emailVerified: true });
+    await User.findByIdAndUpdate(
+      decodedToken.userId,
+      { emailVerified: true },
+      { new: true }
+    );
 
     const baseURL = process.env.BASE_URL;
 

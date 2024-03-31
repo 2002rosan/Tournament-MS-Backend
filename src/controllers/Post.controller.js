@@ -105,6 +105,8 @@ const getAllPosts = asyncHandler(async (req, res) => {
           {
             $project: {
               userName: 1,
+              fullName: 1,
+              emailVerified: 1,
               avatar: 1,
             },
           },
@@ -124,6 +126,9 @@ const getAllPosts = asyncHandler(async (req, res) => {
               likedBy: 1,
             },
           },
+          {
+            $count: "isLiked",
+          },
         ],
       },
     },
@@ -135,6 +140,9 @@ const getAllPosts = asyncHandler(async (req, res) => {
         ownerDetails: {
           $arrayElemAt: ["$Owner", 0],
         },
+        isLiked: {
+          $cond: [{ $eq: [{ $size: "$likedPosts" }, 0] }, false, true],
+        },
       },
     },
     {
@@ -142,6 +150,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
         content: 1,
         ownerDetails: 1,
         likeCount: 1,
+        isLiked: 1,
         createdAt: 1,
       },
     },

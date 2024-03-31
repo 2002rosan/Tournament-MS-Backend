@@ -72,6 +72,7 @@ const togglePostLike = asyncHandler(async (req, res) => {
 
   if (likedAlready) {
     await Like.findByIdAndDelete(likedAlready?._id);
+    await Post.findByIdAndUpdate(postId, { isLiked: false });
 
     return res.status(200).json(new apiResponse(200, { isLiked: false }));
   }
@@ -80,6 +81,7 @@ const togglePostLike = asyncHandler(async (req, res) => {
     post: postId,
     likedBy: req.user?.id,
   });
+  await Post.findByIdAndUpdate(postId, { isLiked: true });
 
   return res.status(200).json(new apiResponse(200, { isLiked: true }));
 });

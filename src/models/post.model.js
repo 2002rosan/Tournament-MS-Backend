@@ -10,6 +10,10 @@ const postSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
+    isLiked: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
