@@ -3,6 +3,7 @@ import { Post } from "../models/post.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { getLoggedInUserId } from "../middlewares/Auth.middleware.js";
 
 // To create post / tweet
 const createPost = asyncHandler(async (req, res) => {
@@ -96,62 +97,70 @@ const getAllPosts = asyncHandler(async (req, res) => {
   const posts = await Post.aggregate([
     {
       $lookup: {
-        from: "users",
-        foreignField: "_id",
-        localField: "owner",
-        as: "Owner",
-
-        pipeline: [
-          {
-            $project: {
-              userName: 1,
-              fullName: 1,
-              emailVerified: 1,
-              avatar: 1,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $lookup: {
         from: "likes",
         localField: "_id",
         foreignField: "post",
-        as: "likedPosts",
-
-        pipeline: [
-          {
-            $project: {
-              likedBy: 1,
-            },
-          },
-          {
-            $count: "isLiked",
-          },
-        ],
-      },
-    },
-    {
-      $addFields: {
-        likeCount: {
-          $size: "$likedPosts",
-        },
-        ownerDetails: {
-          $arrayElemAt: ["$Owner", 0],
-        },
-        isLiked: {
-          $cond: [{ $eq: [{ $size: "$likedPosts" }, 0] }, false, true],
-        },
+        as: "likes",
       },
     },
     {
       $project: {
+        _id: 1,
         content: 1,
-        ownerDetails: 1,
-        likeCount: 1,
-        isLiked: 1,
         createdAt: 1,
+        updatedAt: 1,
+        owner: 1,
+        likesCount: { $size: "$likes" },
+        likedBy: "$likes.likedBy",
+      },
+    },
+    {
+      $unwind: {
+        path: "$likedBy",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $group: {
+        _id: "$_id",
+        content: { $first: "$content" },
+        createdAt: { $first: "$createdAt" },
+        updatedAt: { $first: "$updatedAt" },
+        owner: { $first: "$owner" }, // Preserve the post owner ID
+        likesCount: { $first: "$likesCount" },
+        likedBy: { $push: "$likedBy" },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "likedBy",
+        foreignField: "_id",
+        as: "likedUsers",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "ownerDetails", // Field name to store the owner details
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        content: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        ownerDetails: {
+          userName: 1,
+          fullName: 1,
+          emailVerified: 1,
+          avatar: 1,
+        },
+        likesCount: 1,
+        likedBy: "$likedUsers._id",
       },
     },
   ]);

@@ -8,11 +8,7 @@ const postSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      require: true,
-    },
-    isLiked: {
-      type: Boolean,
-      default: false,
+      required: true,
     },
   },
   { timestamps: true }

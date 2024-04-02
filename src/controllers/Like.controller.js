@@ -60,7 +60,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
 // For Post Likes
 const togglePostLike = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
+  const { postId } = req.body;
 
   const checkId = await Post.findById(postId);
   if (!checkId) throw new apiError(404, "Invalid post ID");
@@ -86,4 +86,39 @@ const togglePostLike = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, { isLiked: true }));
 });
 
-export { toggleVideoLike, toggleCommentLike, togglePostLike };
+const getPostLikes = asyncHandler(async (req, res, next) => {
+  const { postId, userId } = req.body;
+
+  try {
+    if (!postId) throw new apiError(404, "Post ID is required");
+
+    const postLikes = await Like.find({ post: postId }).populate([
+      { path: "likedBy", select: "userName fullName avatar" },
+    ]);
+    if (!postLikes) throw new apiError(404, "Post not found");
+
+    // Check if user has already liked the post
+    let isLiked = false;
+    postLikes.forEach((like) => {
+      if (like.likedBy._id.toString() === userId) {
+        isLiked = true;
+      }
+    });
+
+    return res.status(200).json(
+      new apiResponse(
+        200,
+        {
+          postlikes: postLikes,
+          totalPostLikes: postLikes.length,
+          isLiked: isLiked,
+        },
+        "Likes fetched successfully"
+      )
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+export { toggleVideoLike, toggleCommentLike, togglePostLike, getPostLikes };

@@ -78,7 +78,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
 const resendVerification = asyncHandler(async (req, res, next) => {
   const { email } = req.body;
-  const userId = req.user.Id;
+  const userId = req.user?.id;
   try {
     if (!email) throw new apiError(400, "Please provide email");
 
