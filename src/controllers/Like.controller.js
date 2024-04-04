@@ -87,7 +87,7 @@ const togglePostLike = asyncHandler(async (req, res) => {
 });
 
 const getPostLikes = asyncHandler(async (req, res, next) => {
-  const { postId, userId } = req.body;
+  const { postId } = req.body;
 
   try {
     if (!postId) throw new apiError(404, "Post ID is required");
@@ -95,15 +95,7 @@ const getPostLikes = asyncHandler(async (req, res, next) => {
     const postLikes = await Like.find({ post: postId }).populate([
       { path: "likedBy", select: "userName fullName avatar" },
     ]);
-    if (!postLikes) throw new apiError(404, "Post not found");
-
-    // Check if user has already liked the post
-    let isLiked = false;
-    postLikes.forEach((like) => {
-      if (like.likedBy._id.toString() === userId) {
-        isLiked = true;
-      }
-    });
+    if (!postLikes) return res.status(404).json("Post not found");
 
     return res.status(200).json(
       new apiResponse(
@@ -111,7 +103,6 @@ const getPostLikes = asyncHandler(async (req, res, next) => {
         {
           postlikes: postLikes,
           totalPostLikes: postLikes.length,
-          isLiked: isLiked,
         },
         "Likes fetched successfully"
       )
