@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/Auth.middleware.js";
 import {
+  getCommentLikes,
   getPostLikes,
   toggleCommentLike,
   togglePostLike,
@@ -13,5 +14,6 @@ router.route("/videoLike/:videoId").post(verifyJWT, toggleVideoLike);
 router.route("/commentLike/:commentId").post(verifyJWT, toggleCommentLike);
 router.route("/postLike").post(verifyJWT, togglePostLike);
 router.route("/postLike-byId").post(getPostLikes);
+router.route("/:commentId").get(getCommentLikes);
 
 export default router;

@@ -4,6 +4,7 @@ import { apiError } from "../utils/apiError.js";
 import { Video } from "../models/video.model.js";
 import { Comment } from "../models/comment.model.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import { Post } from "../models/post.model.js";
 
 // To get comments of a specific video
 const getVideoComments = asyncHandler(async (req, res) => {
@@ -96,4 +97,28 @@ const addComment = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, comment, "Comment created"));
 });
 
-export { getVideoComments, addComment };
+const addPostComment = asyncHandler(async (req, res, next) => {
+  try {
+    const { postId, content } = req.body;
+    if (!(postId && content))
+      throw new apiError(400, "Post ID and content are required");
+
+    const post = await Post.findById(postId);
+    if (!post) throw new apiError(404, "Post not found");
+
+    const commentPost = await Comment.create({
+      content,
+      post: postId,
+      owner: req.user?.id,
+    });
+    if (!commentPost) throw new apiError(400, "Comment not created");
+
+    return res
+      .status(200)
+      .json(new apiResponse(200, commentPost, "Comment created"));
+  } catch (error) {
+    next(error);
+  }
+});
+
+export { getVideoComments, addComment, addPostComment };

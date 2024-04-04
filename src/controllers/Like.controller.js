@@ -112,4 +112,34 @@ const getPostLikes = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { toggleVideoLike, toggleCommentLike, togglePostLike, getPostLikes };
+const getCommentLikes = asyncHandler(async (req, res, next) => {
+  const { commentId } = req.params;
+  try {
+    if (!commentId) throw new apiError(401, "Comment ID is required");
+
+    const commentLikes = await Like.find({ comment: commentId }).populate([
+      { path: "likedBy", select: "userName fullName avatar" },
+    ]);
+    if (!commentLikes) return res.status(404).json("Comment not found");
+
+    return res
+      .status(200)
+      .json(
+        new apiResponse(
+          200,
+          { commentLikes, totalCommentLikes: commentLikes.length },
+          "Likes fetched successfully"
+        )
+      );
+  } catch (error) {
+    next(error);
+  }
+});
+
+export {
+  toggleVideoLike,
+  toggleCommentLike,
+  togglePostLike,
+  getPostLikes,
+  getCommentLikes,
+};
