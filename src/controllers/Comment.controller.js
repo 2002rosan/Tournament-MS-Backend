@@ -121,4 +121,27 @@ const addPostComment = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { getVideoComments, addComment, addPostComment };
+const getPostComment = asyncHandler(async (req, res, next) => {
+  const { postId } = req.params;
+  try {
+    if (!postId) throw new apiError(400, "No postID provided");
+
+    const comments = await Comment.find({ post: postId }).populate([
+      { path: "owner", select: "userName fullName avatar emailVerified" },
+    ]);
+
+    return res
+      .status(200)
+      .json(
+        new apiResponse(
+          200,
+          { comments: comments, totalComments: comments.length },
+          "Comments fetched successfully"
+        )
+      );
+  } catch (error) {
+    next(error);
+  }
+});
+
+export { getVideoComments, addComment, addPostComment, getPostComment };

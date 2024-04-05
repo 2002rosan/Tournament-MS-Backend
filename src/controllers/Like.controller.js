@@ -117,9 +117,7 @@ const getCommentLikes = asyncHandler(async (req, res, next) => {
   try {
     if (!commentId) throw new apiError(401, "Comment ID is required");
 
-    const commentLikes = await Like.find({ comment: commentId }).populate([
-      { path: "likedBy", select: "userName fullName avatar" },
-    ]);
+    const commentLikes = await Like.find({ comment: commentId });
     if (!commentLikes) return res.status(404).json("Comment not found");
 
     return res

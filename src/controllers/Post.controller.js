@@ -104,6 +104,14 @@ const getAllPosts = asyncHandler(async (req, res) => {
       },
     },
     {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "post",
+        as: "comments",
+      },
+    },
+    {
       $project: {
         _id: 1,
         content: 1,
@@ -111,6 +119,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
         updatedAt: 1,
         owner: 1,
         likesCount: { $size: "$likes" },
+        commentsCount: { $size: "$comments" }, // New field to get comments count
         likedBy: "$likes.likedBy",
       },
     },
@@ -128,6 +137,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
         updatedAt: { $first: "$updatedAt" },
         owner: { $first: "$owner" }, // Preserve the post owner ID
         likesCount: { $first: "$likesCount" },
+        commentsCount: { $first: "$commentsCount" }, // Preserve the comments count
         likedBy: { $push: "$likedBy" },
       },
     },
@@ -160,6 +170,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
           avatar: 1,
         },
         likesCount: 1,
+        commentsCount: 1, // Include comments count in the response
         likedBy: "$likedUsers._id",
       },
     },
@@ -170,6 +181,24 @@ const getAllPosts = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new apiResponse(200, posts, "Posts fetched successfully"));
+});
+
+const getPostByID = asyncHandler(async (req, res, next) => {
+  const { postId } = req.params;
+  try {
+    if (!postId) throw new apiError(400, "No post ID provided");
+
+    const findPost = await Post.findById(postId);
+    if (!findPost) throw new apiError(404, "Post not found");
+
+    const postData = await findPost.populate([
+      { path: "owner", select: "userName avatar fullName emailVerified" },
+    ]);
+
+    return res.status(200).json(new apiResponse(200, postData, "Post fetched"));
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Update post or tweet
@@ -207,4 +236,11 @@ const deletePost = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, {}, "Post deleted"));
 });
 
-export { createPost, getUserPosts, getAllPosts, updatePost, deletePost };
+export {
+  createPost,
+  getUserPosts,
+  getAllPosts,
+  updatePost,
+  deletePost,
+  getPostByID,
+};
