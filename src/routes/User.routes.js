@@ -23,6 +23,7 @@ import { apiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import { ResetPassword } from "../models/resetPassword.model.js";
+import { BackGroundContent } from "../controllers/AdminContent.controller.js";
 
 const router = Router();
 
@@ -104,5 +105,11 @@ router.route("/delete-user").delete(verifyJWT, checkAdmin, deleteUser);
 
 // Get all user details
 router.route("/getAllUser").get(verifyJWT, checkAdmin, getAllUser);
+
+// Background contents
+router.route("/background-content").get(BackGroundContent);
+router
+  .route("/uploadBackground-content")
+  .post(verifyJWT, checkAdmin, BackGroundContent);
 
 export default router;
