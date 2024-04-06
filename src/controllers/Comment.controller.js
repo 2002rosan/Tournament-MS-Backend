@@ -130,21 +130,62 @@ const getPostComment = asyncHandler(async (req, res, next) => {
   try {
     if (!postId) throw new apiError(400, "No postID provided");
 
-    const comments = await Comment.find({ post: postId })
-      .populate([
-        { path: "owner", select: "userName fullName avatar emailVerified" },
-      ])
-      .sort({ createdAt: -1 });
+    const commentsWithLikes = await Comment.aggregate([
+      {
+        $match: { post: new mongoose.Types.ObjectId(postId) },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "comment",
+          as: "likes",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "likes.likedBy",
+          foreignField: "_id",
+          as: "likedBy",
+        },
+      },
+      {
+        $addFields: {
+          likedBy: "$likedBy._id",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          video: 1,
+          owner: { userName: 1, fullName: 1, emailVerified: 1, avatar: 1 },
+          post: 1,
+          createdAt: 1,
+          likedBy: 1,
+        },
+      },
+    ]);
 
-    return res
-      .status(200)
-      .json(
-        new apiResponse(
-          200,
-          { comments: comments, totalComments: comments.length },
-          "Comments fetched successfully"
-        )
-      );
+    return res.status(200).json(
+      new apiResponse(
+        200,
+        {
+          comments: commentsWithLikes,
+          totalComments: commentsWithLikes.length,
+        },
+        "Comments with likes fetched successfully"
+      )
+    );
   } catch (error) {
     next(error);
   }

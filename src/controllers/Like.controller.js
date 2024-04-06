@@ -47,7 +47,15 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
   if (likedAlready) {
     await Like.findByIdAndDelete(likedAlready?._id);
 
-    return res.status(200).json(new apiResponse(200, { isLiked: false }));
+    return res
+      .status(200)
+      .json(
+        new apiResponse(200, {
+          isLiked: false,
+          commentId,
+          userId: req.user?.id,
+        })
+      );
   }
 
   await Like.create({
@@ -55,7 +63,11 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     likedBy: req.user?.id,
   });
 
-  return res.status(200).json(new apiResponse(200, { isLiked: true }));
+  return res
+    .status(200)
+    .json(
+      new apiResponse(200, { isLiked: true, commentId, userId: req.user?.id })
+    );
 });
 
 // For Post Likes
