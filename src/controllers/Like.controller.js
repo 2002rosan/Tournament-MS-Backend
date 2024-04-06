@@ -93,7 +93,7 @@ const getPostLikes = asyncHandler(async (req, res, next) => {
     if (!postId) throw new apiError(404, "Post ID is required");
 
     const postLikes = await Like.find({ post: postId }).populate([
-      { path: "likedBy", select: "userName fullName avatar" },
+      { path: "likedBy", select: "userName fullName avatar emailVerified" },
     ]);
     if (!postLikes) return res.status(404).json("Post not found");
 

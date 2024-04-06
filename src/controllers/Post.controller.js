@@ -3,22 +3,37 @@ import { Post } from "../models/post.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { getLoggedInUserId } from "../middlewares/Auth.middleware.js";
+import { uploadOnCloudinary } from "../utils/Cloudinary.js";
 
 // To create post / tweet
-const createPost = asyncHandler(async (req, res) => {
-  const { postData } = req.body;
-  const userId = req.user?.id;
-  if (!postData) throw new apiError(404, "Missing Data");
+const createPost = asyncHandler(async (req, res, next) => {
+  const { title } = req.body;
+  console.log(title);
+  try {
+    const image = req.files?.image[0]?.path;
+    console.log({ image: image });
+    const userId = req.user?.id;
+    if (!title) throw new apiError(404, "Missing Data");
 
-  const createPost = await Post.create({
-    owner: userId,
-    content: postData,
-  });
-  const data = await createPost.save();
-  if (!data) throw new apiError(500, "Server Error");
+    let ImageFile = "";
+    if (image) {
+      const uploadImage = await uploadOnCloudinary(image);
+      if (!uploadImage) throw new apiError(500, "Failed to Upload Image");
+      ImageFile = uploadImage.url;
+    }
 
-  return res.status(200).json(new apiResponse(200, data, "Post tweeted"));
+    const createPost = await Post.create({
+      owner: userId,
+      content: title,
+      imageFile: ImageFile,
+    });
+    const data = await createPost.save();
+    if (!data) throw new apiError(500, "Server Error");
+
+    return res.status(200).json(new apiResponse(200, data, "Post tweeted"));
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Get posts by userId of a specific user
@@ -115,11 +130,12 @@ const getAllPosts = asyncHandler(async (req, res) => {
       $project: {
         _id: 1,
         content: 1,
+        imageFile: 1,
         createdAt: 1,
         updatedAt: 1,
         owner: 1,
         likesCount: { $size: "$likes" },
-        commentsCount: { $size: "$comments" }, // New field to get comments count
+        commentsCount: { $size: "$comments" },
         likedBy: "$likes.likedBy",
       },
     },
@@ -133,11 +149,12 @@ const getAllPosts = asyncHandler(async (req, res) => {
       $group: {
         _id: "$_id",
         content: { $first: "$content" },
+        imageFile: { $first: "$imageFile" },
         createdAt: { $first: "$createdAt" },
         updatedAt: { $first: "$updatedAt" },
-        owner: { $first: "$owner" }, // Preserve the post owner ID
+        owner: { $first: "$owner" },
         likesCount: { $first: "$likesCount" },
-        commentsCount: { $first: "$commentsCount" }, // Preserve the comments count
+        commentsCount: { $first: "$commentsCount" },
         likedBy: { $push: "$likedBy" },
       },
     },
@@ -154,13 +171,14 @@ const getAllPosts = asyncHandler(async (req, res) => {
         from: "users",
         localField: "owner",
         foreignField: "_id",
-        as: "ownerDetails", // Field name to store the owner details
+        as: "ownerDetails",
       },
     },
     {
       $project: {
         _id: 1,
         content: 1,
+        imageFile: 1,
         createdAt: 1,
         updatedAt: 1,
         ownerDetails: {
@@ -170,8 +188,14 @@ const getAllPosts = asyncHandler(async (req, res) => {
           avatar: 1,
         },
         likesCount: 1,
-        commentsCount: 1, // Include comments count in the response
+        commentsCount: 1,
         likedBy: "$likedUsers._id",
+      },
+    },
+    {
+      $sort: {
+        likesCount: -1, // Sort by highest likes
+        createdAt: -1, // Then sort by newest
       },
     },
   ]);

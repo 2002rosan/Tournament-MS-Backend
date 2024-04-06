@@ -113,6 +113,10 @@ const addPostComment = asyncHandler(async (req, res, next) => {
     });
     if (!commentPost) throw new apiError(400, "Comment not created");
 
+    await commentPost.populate([
+      { path: "owner", select: "avatar userName emailVerified fullName" },
+    ]);
+
     return res
       .status(200)
       .json(new apiResponse(200, commentPost, "Comment created"));
@@ -126,9 +130,11 @@ const getPostComment = asyncHandler(async (req, res, next) => {
   try {
     if (!postId) throw new apiError(400, "No postID provided");
 
-    const comments = await Comment.find({ post: postId }).populate([
-      { path: "owner", select: "userName fullName avatar emailVerified" },
-    ]);
+    const comments = await Comment.find({ post: postId })
+      .populate([
+        { path: "owner", select: "userName fullName avatar emailVerified" },
+      ])
+      .sort({ createdAt: -1 });
 
     return res
       .status(200)

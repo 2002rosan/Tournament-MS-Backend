@@ -11,11 +11,14 @@ import {
   getUserPosts,
   updatePost,
 } from "../controllers/Post.controller.js";
+import { upload } from "../middlewares/Multer.middleware.js";
 
 const router = Router();
 
 router.route("/").get(getLoggedInUserId, getAllPosts);
-router.route("/create-post").post(verifyJWT, createPost);
+router
+  .route("/create-post")
+  .post(verifyJWT, upload.fields([{ name: "image", maxCount: 1 }]), createPost);
 router.route("/getPosts/:userId").get(verifyJWT, getUserPosts);
 router.route("/update-post/:postId").patch(verifyJWT, updatePost);
 router.route("/delete-post/:postId").delete(verifyJWT, deletePost);
