@@ -4,6 +4,7 @@ import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import { Like } from "../models/like.model.js";
 
 // To create post / tweet
 const createPost = asyncHandler(async (req, res, next) => {
@@ -219,7 +220,19 @@ const getPostByID = asyncHandler(async (req, res, next) => {
       { path: "owner", select: "userName avatar fullName emailVerified" },
     ]);
 
-    return res.status(200).json(new apiResponse(200, postData, "Post fetched"));
+    const postLike = await Like.find({ post: postId }).populate([
+      { path: "likedBy", select: "_id" },
+    ]);
+
+    return res
+      .status(200)
+      .json(
+        new apiResponse(
+          200,
+          { postData, postLike, totalLikes: postLike.length },
+          "Post fetched"
+        )
+      );
   } catch (error) {
     next(error);
   }
