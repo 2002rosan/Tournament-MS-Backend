@@ -9,10 +9,8 @@ import { Like } from "../models/like.model.js";
 // To create post / tweet
 const createPost = asyncHandler(async (req, res, next) => {
   const { title } = req.body;
-  console.log(title);
   try {
     const image = req.files?.image[0]?.path;
-    console.log({ image: image });
     const userId = req.user?.id;
     if (!title) throw new apiError(404, "Missing Data");
 

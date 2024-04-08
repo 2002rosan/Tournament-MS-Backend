@@ -191,4 +191,29 @@ const getPostComment = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { getVideoComments, addComment, addPostComment, getPostComment };
+const deleteComment = asyncHandler(async (req, res, next) => {
+  const { commentId } = req.params;
+  try {
+    if (!commentId) throw new apiError(400, "Comment Id is required");
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) throw new apiError(401, "Comment not found");
+
+    const deleteComment = await Comment.findByIdAndDelete(commentId);
+    if (!deleteComment) throw new apiError(401, "Deleting comment failed");
+
+    return res
+      .status(200)
+      .json(new apiResponse(200, comment, "Successfully deleted the comment"));
+  } catch (error) {
+    next(error);
+  }
+});
+
+export {
+  getVideoComments,
+  addComment,
+  addPostComment,
+  getPostComment,
+  deleteComment,
+};

@@ -18,6 +18,7 @@ import {
   deleteUser,
   getAllUser,
   resendVerification,
+  getUserProfile,
 } from "../controllers/User.controller.js";
 import { apiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
@@ -111,5 +112,7 @@ router.route("/background-content").get(BackGroundContent);
 router
   .route("/uploadBackground-content")
   .post(verifyJWT, checkAdmin, BackGroundContent);
+
+router.route("/userDetails/:userName").get(getUserProfile);
 
 export default router;

@@ -525,6 +525,32 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserProfile = asyncHandler(async (req, res, next) => {
+  try {
+    const { userName } = req.params;
+    if (!userName?.trim()) throw new apiError(400, "User name us required");
+
+    const user = await User.findOne(
+      { userName },
+      {
+        _id: 1,
+        userName: 1,
+        fullName: 1,
+        emailVerified: 1,
+        role: 1,
+        createdAt: 1,
+        coverImage: 1,
+        avatar: 1,
+      }
+    );
+    if (!user) throw new apiError(404, "User not found");
+
+    return res.status(200).json(new apiResponse(200, user));
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Change role
 const changeRole = asyncHandler(async (req, res, next) => {
   try {
@@ -593,4 +619,5 @@ export {
   deleteUser,
   getAllUser,
   resendVerification,
+  getUserProfile,
 };

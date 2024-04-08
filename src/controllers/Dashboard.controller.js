@@ -27,7 +27,7 @@ const getProfileStats = asyncHandler(async (req, res) => {
   ]);
 
   // Total videos
-  const [totalVideos] = await Video.aggregate([
+  const totalVideos = await Video.aggregate([
     {
       $match: {
         ownerId: new mongoose.Types.ObjectId(userId),
