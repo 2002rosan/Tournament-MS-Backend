@@ -37,31 +37,12 @@ const createPost = asyncHandler(async (req, res, next) => {
 
 // Get posts by userId of a specific user
 const getUserPosts = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
-
-  if (!userId) throw new apiError(400, "Invalid userId");
+  const userId = req.params.userId; // Assuming userId is obtained from request params
 
   const posts = await Post.aggregate([
     {
       $match: {
-        owner: new mongoose.Types.ObjectId(userId),
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        foreignField: "_id",
-        localField: "owner",
-        as: "Owner",
-
-        pipeline: [
-          {
-            $project: {
-              userName: 1,
-              avatar: 1,
-            },
-          },
-        ],
+        owner: new mongoose.Types.ObjectId(userId), // Convert userId to ObjectId if needed
       },
     },
     {
@@ -69,36 +50,92 @@ const getUserPosts = asyncHandler(async (req, res) => {
         from: "likes",
         localField: "_id",
         foreignField: "post",
-        as: "likedPosts",
-
-        pipeline: [
-          {
-            $project: {
-              likedBy: 1,
-            },
-          },
-        ],
+        as: "likes",
       },
     },
     {
-      $addFields: {
-        likeCount: {
-          $size: "$likedPosts",
-        },
-        ownerDetails: {
-          $arrayElemAt: ["$Owner", 0],
-        },
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "post",
+        as: "comments",
       },
     },
     {
       $project: {
+        _id: 1,
         content: 1,
-        ownerDetails: 1,
-        likeCount: 1,
+        imageFile: 1,
         createdAt: 1,
+        updatedAt: 1,
+        owner: 1,
+        likesCount: { $size: "$likes" },
+        commentsCount: { $size: "$comments" },
+        likedBy: "$likes.likedBy",
+      },
+    },
+    {
+      $unwind: {
+        path: "$likedBy",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $group: {
+        _id: "$_id",
+        content: { $first: "$content" },
+        imageFile: { $first: "$imageFile" },
+        createdAt: { $first: "$createdAt" },
+        updatedAt: { $first: "$updatedAt" },
+        owner: { $first: "$owner" },
+        likesCount: { $first: "$likesCount" },
+        commentsCount: { $first: "$commentsCount" },
+        likedBy: { $push: "$likedBy" },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "likedBy",
+        foreignField: "_id",
+        as: "likedUsers",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "ownerDetails",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        content: 1,
+        imageFile: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        ownerDetails: {
+          userName: 1,
+          fullName: 1,
+          emailVerified: 1,
+          avatar: 1,
+          role: 1,
+        },
+        likesCount: 1,
+        commentsCount: 1,
+        likedBy: "$likedUsers._id",
+      },
+    },
+    {
+      $sort: {
+        likesCount: -1, // Sort by highest likes
+        createdAt: -1, // Then sort by newest
       },
     },
   ]);
+
   if (!posts) throw new apiError(500, "Error fetching posts");
 
   return res
@@ -185,6 +222,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
           fullName: 1,
           emailVerified: 1,
           avatar: 1,
+          role: 1,
         },
         likesCount: 1,
         commentsCount: 1,
@@ -215,7 +253,7 @@ const getPostByID = asyncHandler(async (req, res, next) => {
     if (!findPost) throw new apiError(404, "Post not found");
 
     const postData = await findPost.populate([
-      { path: "owner", select: "userName avatar fullName emailVerified" },
+      { path: "owner", select: "userName avatar fullName emailVerified role" },
     ]);
 
     const postLike = await Like.find({ post: postId }).populate([
