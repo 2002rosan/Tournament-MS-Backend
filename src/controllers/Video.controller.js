@@ -259,6 +259,20 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
   }
 });
 
+const getUsersVideo = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    if (!userId) throw new apiError(401, "User id is required");
+
+    const video = await Video.find({ ownerId: userId });
+    return res
+      .status(200)
+      .json(new apiResponse(200, video, "Video fetched success"));
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getAllVideo,
   publishVideo,
@@ -266,4 +280,5 @@ export {
   getVideoById,
   updateVideo,
   togglePublishStatus,
+  getUsersVideo,
 };
