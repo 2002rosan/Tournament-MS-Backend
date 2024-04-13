@@ -7,6 +7,8 @@ import {
   removeFileFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/Cloudinary.js";
+import { Like } from "../models/like.model.js";
+import { Comment } from "../models/comment.model.js";
 
 // To get/fetch all videos and its data from DB
 const getAllVideo = asyncHandler(async (req, res, next) => {
@@ -29,10 +31,11 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
   if (title) {
     queryOption.$text = { $search: title };
   }
+  // Add filter for isPublished
+  queryOption.isPublished = true;
 
-  const getVideo = queryOption ? Video.find(queryOption) : Video.find();
   try {
-    const data = await getVideo
+    const data = await Video.find(queryOption)
       .sort(sortOption)
       .skip((page - 1) * limit)
       .limit(limit)
@@ -216,29 +219,34 @@ const getVideoById = asyncHandler(async (req, res) => {
 });
 
 // Update video
-const updateVideo = asyncHandler(async (req, res) => {
-  const { videoId } = req.params;
-  const { title, description } = req.body;
+const updateVideo = asyncHandler(async (req, res, next) => {
+  try {
+    const { videoId } = req.params;
+    const { title, description } = req.body;
 
-  if (!videoId) throw new apiError(404, "Invalid video ID");
-  if (!title || !description)
-    throw new apiError(404, "Title or description is required");
+    if (!videoId) throw new apiError(404, "Invalid video ID");
+    if (!title || !description)
+      throw new apiError(404, "Title or description is required");
 
-  const newThumbnail = req.file?.path;
-  if (!newThumbnail) throw new apiError(404, "No image found to update");
+    // const newThumbnail = req.file?.path;
+    // if (!newThumbnail) throw new apiError(404, "No image found to update");
 
-  const UploadNewThumbnail = await uploadOnCloudinary(newThumbnail);
-  const video = await Video.findByIdAndUpdate(videoId, {
-    $set: {
-      thumbnail: UploadNewThumbnail?.url,
-      title,
-      description,
-    },
-  });
-  await removeFileFromCloudinary(video?.thumbnail);
-  // fs.unlinkSync(newThumbnail);
+    // const UploadNewThumbnail = await uploadOnCloudinary(newThumbnail);
+    const video = await Video.findByIdAndUpdate(videoId, {
+      $set: {
+        title,
+        description,
+      },
+    });
+    // await removeFileFromCloudinary(video?.thumbnail);
+    // fs.unlinkSync(newThumbnail);
 
-  return res.status(200).json(new apiResponse(200, { video }, "Video updated"));
+    return res
+      .status(200)
+      .json(new apiResponse(200, { video }, "Video updated"));
+  } catch (error) {
+    next(error);
+  }
 });
 
 // To make video private or public
@@ -250,10 +258,17 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     const video = await Video.findById(videoId);
     video.isPublished = !video.isPublished;
     await video.save();
+    const status = await Video.findById(videoId);
 
     return res
       .status(200)
-      .json(new apiResponse(200, {}, "Video published status changed"));
+      .json(
+        new apiResponse(
+          200,
+          { videoId: videoId, status: status.isPublished },
+          "Video published status changed"
+        )
+      );
   } catch (error) {
     throw new apiError(500, "Error while changing video status");
   }
@@ -265,9 +280,44 @@ const getUsersVideo = async (req, res, next) => {
     if (!userId) throw new apiError(401, "User id is required");
 
     const video = await Video.find({ ownerId: userId });
+
     return res
       .status(200)
       .json(new apiResponse(200, video, "Video fetched success"));
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getMyVideos = async (req, res, next) => {
+  try {
+    const userId = req.params;
+    const videos = await Video.find({ ownerId: userId.userId }).exec();
+
+    // Populate likes and comments for each video
+    const videosWithLikesAndComments = await Promise.all(
+      videos.map(async (video) => {
+        const populatedVideo = video.toJSON(); // Convert Mongoose document to plain object
+        // Populate likes
+        populatedVideo.likes = await Like.find({ video: video._id })
+          .populate("likedBy")
+          .exec();
+        // Populate comments
+        populatedVideo.comments = await Comment.find({ video: video._id })
+          .populate("owner")
+          .exec();
+        return populatedVideo;
+      })
+    );
+    return res
+      .status(200)
+      .json(
+        new apiResponse(
+          200,
+          videosWithLikesAndComments,
+          "Video fetched success"
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -281,4 +331,5 @@ export {
   updateVideo,
   togglePublishStatus,
   getUsersVideo,
+  getMyVideos,
 };

@@ -306,7 +306,7 @@ const deletePost = asyncHandler(async (req, res) => {
   const postStatus = await Post.findByIdAndDelete(postId);
   if (!postStatus) throw new apiError(500, "Error while deleting your post");
 
-  return res.status(200).json(new apiResponse(200, {}, "Post deleted"));
+  return res.status(200).json(new apiResponse(200, postId, "Post deleted"));
 });
 
 export {

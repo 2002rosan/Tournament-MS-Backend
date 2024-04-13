@@ -3,6 +3,7 @@ import { verifyJWT } from "../middlewares/Auth.middleware.js";
 import {
   deleteVideo,
   getAllVideo,
+  getMyVideos,
   getUsersVideo,
   getVideoById,
   publishVideo,
@@ -35,5 +36,6 @@ router
   .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
 router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus);
 router.route("/getUsersVideo/:userId").get(getUsersVideo);
+router.route("/manageVideos/:userId").get(verifyJWT, getMyVideos);
 
 export default router;
