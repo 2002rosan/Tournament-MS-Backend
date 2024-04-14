@@ -1,10 +1,6 @@
-import { Comment } from "../models/comment.model.js";
 import { EmailVerification } from "../models/emailVerification.model.js";
-import { Post } from "../models/post.model.js";
 import { ResetPassword } from "../models/resetPassword.model.js";
-import { Tournament } from "../models/tournament.model.js";
 import { User } from "../models/user.model.js";
-import { Video } from "../models/video.model.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -591,12 +587,50 @@ const deleteUser = asyncHandler(async (req, res, next) => {
 
 const getAllUser = asyncHandler(async (req, res, next) => {
   try {
-    const users = await User.find();
-    return res
-      .status(200)
-      .json(
-        new apiResponse(200, { count: users.length, users }, "Users fetched")
-      );
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Sorting
+    let sortOption = {};
+    const sortBy = req.query.sortBy;
+    if (sortBy) {
+      switch (sortBy) {
+        case "joined":
+          sortOption = { createdAt: -1 }; // Assuming createdAt field exists
+          break;
+        case "admin":
+          sortOption = { isAdmin: -1 }; // Assuming isAdmin field exists
+          break;
+        default:
+          // Default sorting
+          sortOption = { createdAt: -1 };
+          break;
+      }
+    }
+
+    // Query users with pagination and sorting
+    const users = await User.find()
+      .select("-password -refreshToken")
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
+
+    // Count total users (for pagination)
+    const totalUsers = await User.countDocuments();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        count: users.length,
+        users,
+        totalUsers,
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+      },
+      message: "Users fetched",
+    });
   } catch (error) {
     next(error);
   }

@@ -44,6 +44,4 @@ const BackGroundContent = async (req, res, next) => {
   }
 };
 
-// const getBackground
-
 export { BackGroundContent };

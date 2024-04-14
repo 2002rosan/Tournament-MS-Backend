@@ -29,11 +29,9 @@ router.route("/upload-video").post(
   ]),
   publishVideo
 );
-router.route("/:videoId").delete(verifyJWT, deleteVideo);
+router.route("/delete-video/:videoId").delete(verifyJWT, deleteVideo);
 router.route("/:videoId").get(getVideoById);
-router
-  .route("/:videoId")
-  .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
+router.route("/update-video").patch(verifyJWT, updateVideo);
 router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus);
 router.route("/getUsersVideo/:userId").get(getUsersVideo);
 router.route("/manageVideos/:userId").get(verifyJWT, getMyVideos);

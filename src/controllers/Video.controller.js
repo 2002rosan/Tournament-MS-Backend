@@ -110,7 +110,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new apiResponse(200, {}, "Video deleted successfully"));
+    .json(new apiResponse(200, videoId, "Video deleted successfully"));
 });
 
 // Video by video id
@@ -221,8 +221,7 @@ const getVideoById = asyncHandler(async (req, res) => {
 // Update video
 const updateVideo = asyncHandler(async (req, res, next) => {
   try {
-    const { videoId } = req.params;
-    const { title, description } = req.body;
+    const { videoId, title, description } = req.body;
 
     if (!videoId) throw new apiError(404, "Invalid video ID");
     if (!title || !description)
@@ -232,12 +231,16 @@ const updateVideo = asyncHandler(async (req, res, next) => {
     // if (!newThumbnail) throw new apiError(404, "No image found to update");
 
     // const UploadNewThumbnail = await uploadOnCloudinary(newThumbnail);
-    const video = await Video.findByIdAndUpdate(videoId, {
-      $set: {
-        title,
-        description,
+    const video = await Video.findByIdAndUpdate(
+      videoId,
+      {
+        $set: {
+          title,
+          description,
+        },
       },
-    });
+      { new: true }
+    );
     // await removeFileFromCloudinary(video?.thumbnail);
     // fs.unlinkSync(newThumbnail);
 

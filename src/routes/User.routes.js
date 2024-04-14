@@ -101,6 +101,7 @@ router.route("/c/:userName").get(verifyJWT, getUserChannelProfile);
 
 router.route("/update-role/:id").patch(verifyJWT, checkAdmin, changeRole);
 
+// ADMIN ROUTES
 // Delete user as admin
 router.route("/delete-user").delete(verifyJWT, checkAdmin, deleteUser);
 
