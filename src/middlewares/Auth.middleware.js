@@ -31,7 +31,6 @@ export const checkAdmin = asyncHandler(async (req, res, next) => {
 export const getLoggedInUserId = async (req, res, next) => {
   try {
     const token = req.cookies?.accessToken;
-    // || req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
       return next();

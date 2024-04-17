@@ -108,6 +108,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
       "The video you are trying to delete does not exist."
     );
 
+  removeFileFromCloudinary(video?.videoFile);
+
   return res
     .status(200)
     .json(new apiResponse(200, videoId, "Video deleted successfully"));
