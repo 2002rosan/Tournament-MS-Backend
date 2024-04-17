@@ -564,7 +564,7 @@ const changeRole = asyncHandler(async (req, res, next) => {
     const updatedRole = await User.findByIdAndUpdate(
       userId,
       { role: newRole },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, select: "-password -refreshToken" }
     );
     return res
       .status(200)
@@ -576,10 +576,11 @@ const changeRole = asyncHandler(async (req, res, next) => {
 
 const deleteUser = asyncHandler(async (req, res, next) => {
   try {
-    const { userId } = req.body;
+    const { userId } = req.params;
+    if (!userId) throw new apiError(401, "User Id is required");
     await User.deleteOne({ _id: userId });
 
-    return res.status(200).json({ message: "User deleted successfully" });
+    return res.status(200).json(new apiResponse(200, userId, "User deleted!"));
   } catch (error) {
     next(error);
   }
@@ -587,50 +588,12 @@ const deleteUser = asyncHandler(async (req, res, next) => {
 
 const getAllUser = asyncHandler(async (req, res, next) => {
   try {
-    // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    // Sorting
-    let sortOption = {};
-    const sortBy = req.query.sortBy;
-    if (sortBy) {
-      switch (sortBy) {
-        case "joined":
-          sortOption = { createdAt: -1 }; // Assuming createdAt field exists
-          break;
-        case "admin":
-          sortOption = { isAdmin: -1 }; // Assuming isAdmin field exists
-          break;
-        default:
-          // Default sorting
-          sortOption = { createdAt: -1 };
-          break;
-      }
-    }
-
-    // Query users with pagination and sorting
-    const users = await User.find()
-      .select("-password -refreshToken")
-      .sort(sortOption)
-      .skip(skip)
-      .limit(limit);
-
-    // Count total users (for pagination)
-    const totalUsers = await User.countDocuments();
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        count: users.length,
-        users,
-        totalUsers,
-        currentPage: page,
-        totalPages: Math.ceil(totalUsers / limit),
-      },
-      message: "Users fetched",
-    });
+    const users = await User.find().select("-password -refreshToken");
+    return res
+      .status(200)
+      .json(
+        new apiResponse(200, { count: users.length, users }, "Users fetched")
+      );
   } catch (error) {
     next(error);
   }

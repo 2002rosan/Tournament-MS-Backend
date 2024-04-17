@@ -103,7 +103,7 @@ router.route("/update-role/:id").patch(verifyJWT, checkAdmin, changeRole);
 
 // ADMIN ROUTES
 // Delete user as admin
-router.route("/delete-user").delete(verifyJWT, checkAdmin, deleteUser);
+router.route("/delete-user/:userId").delete(verifyJWT, checkAdmin, deleteUser);
 
 // Get all user details
 router.route("/getAllUser").get(verifyJWT, checkAdmin, getAllUser);
