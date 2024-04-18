@@ -1,4 +1,5 @@
 import { Game } from "../models/game.model.js";
+import { Team } from "../models/team.model.js";
 import { Tournament } from "../models/tournament.model.js";
 import {
   uploadOnCloudinary,
@@ -10,7 +11,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // To create or organize tournament
 const createTournament = asyncHandler(async (req, res) => {
-  const { title, description, game, schedule, playerLimit } = req.body;
+  const { title, description, game, schedule, playerLimit, teamBased } =
+    req.body;
 
   // Check if gameId is valid
   const gameExists = await Game.exists({ _id: game });
@@ -52,6 +54,7 @@ const createTournament = asyncHandler(async (req, res) => {
     game,
     schedule,
     playerLimit,
+    teamBased, // Include teamBased flag in the tournament document
   });
 
   return res
@@ -63,14 +66,45 @@ const joinTournament = async (req, res, next) => {
   const { tournamentId } = req.params;
   try {
     const tournament = await Tournament.findById(tournamentId);
-    if (!tournament) throw new apiError(401, "Tournament does not exists");
+    if (!tournament) throw new apiError(404, "Tournament does not exist");
 
     const registrationEndDate = new Date(tournament.schedule.registration.end);
     const presentDate = new Date();
-    if (presentDate > registrationEndDate)
+    if (presentDate > registrationEndDate) {
       throw new apiError(400, "Registration closed");
+    }
 
-    tournament.players.push(req.user?.id);
+    if (tournament.teamBased) {
+      // If the tournament is team-based, find the team of the owner
+      const team = await Team.findOne({ owner: req.user.id });
+      if (!team) {
+        throw new apiError(404, "You don't own any team");
+      }
+
+      // Check if the team is already joined in the tournament
+      if (tournament.teams.some((team) => team.owner.equals(req.user.id))) {
+        throw new apiError(
+          400,
+          "Your team is already joined in this tournament"
+        );
+      }
+
+      // Add the team to the tournament
+      tournament.teams.push({
+        name: team.name,
+        owner: req.user.id,
+        members: team.members,
+      });
+    } else {
+      // If the tournament is not team-based, check if the user is already joined as an individual player
+      if (tournament.players.includes(req.user.id)) {
+        throw new apiError(400, "You are already joined in this tournament");
+      }
+
+      // Add the player to the tournament
+      tournament.players.push(req.user.id);
+    }
+
     await tournament.save();
 
     return res.status(200).json({ message: "Tournament joined successfully" });
@@ -141,10 +175,30 @@ const deleteTournament = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, {}, "Tournament deleted"));
 });
 
+const tournamentResult = asyncHandler(async (req, res) => {
+  const { user } = req.body;
+  const owner = req.user?.id;
+  const { tournamentId } = req.params;
+  if (!tournamentId) throw new apiError(404, "Invalid tournament Id");
+
+  const tournament = await Tournament.findOne({
+    $and: [{ _id: tournamentId }, { owner }],
+  });
+  console.log(tournament);
+  if (!tournament)
+    throw new apiError(
+      500,
+      "The tournament you are trying to delete doesnot exists"
+    );
+
+  return res.status(200).json(new apiResponse(200, {}, "Tournament deleted"));
+});
+
 export {
   createTournament,
   getAllTournment,
   updateTournament,
   deleteTournament,
   joinTournament,
+  tournamentResult,
 };

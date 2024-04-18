@@ -6,6 +6,7 @@ import {
   deleteTournament,
   getAllTournment,
   joinTournament,
+  tournamentResult,
   updateTournament,
 } from "../controllers/Tournament.controller.js";
 
@@ -33,5 +34,9 @@ router
 router
   .route("/delete-tournament/:tournamentId")
   .delete(verifyJWT, deleteTournament);
+
+router
+  .route("/tournament-result/:tournamentId")
+  .post(verifyJWT, tournamentResult);
 
 export default router;
