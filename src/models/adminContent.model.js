@@ -5,9 +5,6 @@ const adminContentSchema = new Schema(
     videoFile: {
       type: String,
     },
-    backgroundImage: {
-      type: String,
-    },
     status: {
       type: String,
     },

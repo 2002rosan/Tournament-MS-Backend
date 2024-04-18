@@ -24,7 +24,11 @@ import { apiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import { ResetPassword } from "../models/resetPassword.model.js";
-import { BackGroundContent } from "../controllers/AdminContent.controller.js";
+import {
+  BackGroundContent,
+  GetBackGroundContent,
+  UpdateBackgroundContent,
+} from "../controllers/AdminContent.controller.js";
 
 const router = Router();
 
@@ -109,11 +113,26 @@ router.route("/delete-user/:userId").delete(verifyJWT, checkAdmin, deleteUser);
 router.route("/getAllUser").get(verifyJWT, checkAdmin, getAllUser);
 
 // Background contents
-router.route("/background-content").get(BackGroundContent);
 router
   .route("/uploadBackground-content")
-  .post(verifyJWT, checkAdmin, BackGroundContent);
+  .post(
+    verifyJWT,
+    checkAdmin,
+    upload.fields([{ name: "videoFile", maxCount: 1 }]),
+    BackGroundContent
+  );
+
+router
+  .patch("/update-background")
+  .patch(
+    verifyJWT,
+    checkAdmin,
+    upload.fields([{ name: "videoFile", maxCount: 1 }]),
+    UpdateBackgroundContent
+  );
 
 router.route("/userDetails/:userName").get(getUserProfile);
+
+router.route("/backGroundContent").get(GetBackGroundContent);
 
 export default router;

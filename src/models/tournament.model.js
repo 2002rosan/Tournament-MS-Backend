@@ -14,6 +14,7 @@ const tournamentSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      unique: true,
     },
     description: {
       type: String,
@@ -49,6 +50,25 @@ const tournamentSchema = new mongoose.Schema(
     },
     playerLimit: Number,
     players: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    teamBased: {
+      type: Boolean,
+      default: false, // Indicates whether the tournament is team-based or not
+    },
+    teams: [
+      {
+        name: String,
+        owner: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        members: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+        ],
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -16,21 +16,36 @@ const createTournament = asyncHandler(async (req, res) => {
   const gameExists = await Game.exists({ _id: game });
   if (!gameExists) throw new apiError(400, "Invalid Game Id");
 
-  // const banner = req.files?.banner?.[0]?.path;
-  // if (!banner) throw new apiError(400, "Tournament image is required");
+  const banner = req.files?.banner?.[0]?.path;
+  if (!banner) throw new apiError(400, "Tournament image is required");
 
   if (!schedule) throw new apiError(400, "Schedule is required");
   if (!playerLimit) throw new apiError(400, "Player limit is required");
 
-  //   Upload image in cloudinary
-  // const uploadGameBannerOnCloudinary = await uploadOnCloudinary(banner);
-  // if (!uploadGameBannerOnCloudinary)
-  //   throw new apiError(500, "Failed to upload game banner on Cloudinary");
+  if (
+    schedule.registration.start >= schedule.registration.end ||
+    schedule.matches.start >= schedule.matches.end
+  ) {
+    throw new apiError(
+      400,
+      "Invalid schedule: Registration or match dates are not in proper order"
+    );
+  }
+
+  // Check if a tournament with the same title already exists
+  const existingTournament = await Tournament.findOne({ title });
+  if (existingTournament) {
+    throw new apiError(400, "Tournament with this title already exists");
+  }
+
+  // Upload image in cloudinary
+  const uploadGameBannerOnCloudinary = await uploadOnCloudinary(banner);
+  if (!uploadGameBannerOnCloudinary)
+    throw new apiError(500, "Failed to upload game banner on Cloudinary");
 
   const owner = req.user?.id;
   const tournament = await Tournament.create({
-    // banner: uploadGameBannerOnCloudinary.url,
-    banner: "1223",
+    banner: uploadGameBannerOnCloudinary.url,
     owner,
     title,
     description,
