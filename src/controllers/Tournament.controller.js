@@ -181,10 +181,9 @@ const tournamentResult = asyncHandler(async (req, res) => {
   const { tournamentId } = req.params;
   if (!tournamentId) throw new apiError(404, "Invalid tournament Id");
 
-  const tournament = await Tournament.findOne({
-    $and: [{ _id: tournamentId }, { owner }],
-  });
+  const tournament = await Tournament.findOne({ _id: tournamentId, owner });
   console.log(tournament);
+
   if (!tournament)
     throw new apiError(
       500,
