@@ -49,7 +49,7 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
 
 // To publish a video
 const publishVideo = asyncHandler(async (req, res, next) => {
-  const { title, description } = req.body;
+  const { title, description, gameId } = req.body;
 
   try {
     let video;
@@ -86,6 +86,7 @@ const publishVideo = asyncHandler(async (req, res, next) => {
       title,
       description,
       duration,
+      game: gameId,
     });
 
     return res
@@ -328,6 +329,22 @@ const getMyVideos = async (req, res, next) => {
   }
 };
 
+const getGamesVideo = async (req, res, next) => {
+  try {
+    const gameId = req.params.gameId;
+
+    const videos = await Video.find({ game: gameId }).populate([
+      { path: "ownerId", select: "userName avatar" },
+    ]);
+
+    return res
+      .status(200)
+      .json(new apiResponse(200, videos, "Video fetched success"));
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   getAllVideo,
   publishVideo,
@@ -337,4 +354,5 @@ export {
   togglePublishStatus,
   getUsersVideo,
   getMyVideos,
+  getGamesVideo,
 };

@@ -3,6 +3,7 @@ import { verifyJWT } from "../middlewares/Auth.middleware.js";
 import {
   deleteVideo,
   getAllVideo,
+  getGamesVideo,
   getMyVideos,
   getUsersVideo,
   getVideoById,
@@ -35,5 +36,6 @@ router.route("/update-video").patch(verifyJWT, updateVideo);
 router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus);
 router.route("/getUsersVideo/:userId").get(getUsersVideo);
 router.route("/manageVideos/:userId").get(verifyJWT, getMyVideos);
+router.route("/getGamesVideo/:gameId").get(getGamesVideo);
 
 export default router;

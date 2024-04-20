@@ -5,6 +5,7 @@ import {
   createGame,
   deleteGames,
   getGames,
+  getGamesById,
 } from "../controllers/Game.controller.js";
 
 const router = Router();
@@ -24,5 +25,8 @@ router.route("/create-game").post(
 );
 
 router.route("/delete-game/:id").delete(verifyJWT, checkAdmin, deleteGames);
+
+// GAME BY ID
+router.route("/:id").get(getGamesById);
 
 export default router;

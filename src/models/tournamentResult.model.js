@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 
-const teamSchema = new mongoose.Schema(
+const tournamentResultSchema = new mongoose.Schema(
   {
-    name: String,
     tournamentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Tournament",
@@ -22,4 +21,7 @@ const teamSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Team = mongoose.model("Team", teamSchema);
+export const TournamentResult = mongoose.model(
+  "TournamentResult",
+  tournamentResultSchema
+);

@@ -123,7 +123,7 @@ router
   );
 
 router
-  .patch("/update-background")
+  .route("/update-background")
   .patch(
     verifyJWT,
     checkAdmin,

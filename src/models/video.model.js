@@ -35,6 +35,10 @@ const videoSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    game: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Game",
+    },
   },
   { timestamps: true }
 );

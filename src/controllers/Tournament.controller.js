@@ -1,6 +1,7 @@
 import { Game } from "../models/game.model.js";
 import { Team } from "../models/team.model.js";
 import { Tournament } from "../models/tournament.model.js";
+import { TournamentResult } from "../models/tournamentResult.model.js";
 import {
   uploadOnCloudinary,
   removeFileFromCloudinary,
@@ -21,7 +22,9 @@ const createTournament = asyncHandler(async (req, res) => {
   const banner = req.files?.banner?.[0]?.path;
   if (!banner) throw new apiError(400, "Tournament image is required");
 
-  if (!schedule) throw new apiError(400, "Schedule is required");
+  if (!schedule.registration.start)
+    throw new apiError(400, "Schedule registartion is required");
+
   if (!playerLimit) throw new apiError(400, "Player limit is required");
 
   if (
@@ -175,22 +178,59 @@ const deleteTournament = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, {}, "Tournament deleted"));
 });
 
-const tournamentResult = asyncHandler(async (req, res) => {
-  const { user } = req.body;
+const tournamentResult = asyncHandler(async (req, res, next) => {
+  const { playerId, rank } = req.body;
+  if (!(playerId && rank))
+    throw new apiError(401, "Player id and rank is required");
+
   const owner = req.user?.id;
   const { tournamentId } = req.params;
   if (!tournamentId) throw new apiError(404, "Invalid tournament Id");
 
-  const tournament = await Tournament.findOne({ _id: tournamentId, owner });
-  console.log(tournament);
+  try {
+    const tournament = await Tournament.findOne({ _id: tournamentId, owner });
+    console.log(tournament);
 
-  if (!tournament)
-    throw new apiError(
-      500,
-      "The tournament you are trying to delete doesnot exists"
-    );
+    if (!tournament)
+      throw new apiError(
+        500,
+        "The tournament you are trying to delete doesnot exists"
+      );
 
-  return res.status(200).json(new apiResponse(200, {}, "Tournament deleted"));
+    const currentDate = new Date();
+    console.log(currentDate);
+
+    const startDate = new Date(tournament.schedule.matches.start);
+    console.log(startDate);
+
+    if (startDate >= currentDate) {
+      console.log(true);
+
+      const ifExisitingResult = await Tournament.findOne({
+        playerId,
+        tournamentId,
+      });
+
+      if (ifExisitingResult)
+        return res
+          .status(401)
+          .json(
+            new apiResponse(401, {}, "This tournament alreafy has results")
+          );
+
+      const result = await TournamentResult.create({
+        rank: rank,
+        tournamentId,
+        playerId: playerId,
+      });
+
+      return res
+        .status(200)
+        .json(new apiResponse(200, result, "Tournament Results"));
+    }
+  } catch (error) {
+    next(error);
+  }
 });
 
 export {

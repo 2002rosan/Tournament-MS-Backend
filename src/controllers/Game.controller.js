@@ -40,6 +40,20 @@ const getGames = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getGamesById = asyncHandler(async (req, res, next) => {
+  try {
+    const gameId = req.params;
+    if (!gameId) throw new apiError(401, "Game Id is required");
+
+    const game = await Game.findById({ _id: gameId.id });
+    if (!game) throw new apiError(401, "Game not found");
+
+    return res.status(200).json(new apiResponse(200, game, ""));
+  } catch (error) {
+    next(error);
+  }
+});
+
 const deleteGames = asyncHandler(async (req, res, next) => {
   try {
     const gameId = req.params;
@@ -58,4 +72,4 @@ const deleteGames = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { createGame, getGames, deleteGames };
+export { createGame, getGames, deleteGames, getGamesById };
