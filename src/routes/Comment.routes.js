@@ -11,7 +11,7 @@ import { verifyJWT } from "../middlewares/Auth.middleware.js";
 const router = Router();
 
 router.route("/video/:videoId").post(verifyJWT, addComment);
-router.route("/video/:videoId").get(getVideoComments);
+router.route("/video-comments/:videoId").get(getVideoComments);
 router.route("/comment-post").post(verifyJWT, addPostComment);
 router.route("/post/:postId").get(getPostComment);
 router.route("/delete-comment/:commentId").delete(verifyJWT, deleteComment);

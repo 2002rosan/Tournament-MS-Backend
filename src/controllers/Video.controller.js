@@ -141,55 +141,24 @@ const getVideoById = asyncHandler(async (req, res) => {
         localField: "ownerId",
         foreignField: "_id",
         as: "Owner",
-        pipeline: [
-          {
-            $lookup: {
-              from: "followers",
-              localField: "_id",
-              foreignField: "channel",
-              as: "followers",
-            },
-          },
-          {
-            $addFields: {
-              followersCount: {
-                $size: "$followers",
-              },
-              isFollowed: {
-                $cond: {
-                  if: {
-                    $in: [req.user?._id, "$followers.follower"],
-                  },
-                  then: true,
-                  else: false,
-                },
-              },
-            },
-          },
-          {
-            $project: {
-              userName: 1,
-              avatar: 1,
-              followersCount: 1,
-              isFollowed: 1,
-            },
-          },
-        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "games",
+        localField: "game",
+        foreignField: "_id",
+        as: "Game",
       },
     },
     {
       $addFields: {
-        likesCount: {
-          $size: "$Likes",
-        },
-        owner: {
-          $first: "$Owner",
-        },
-        isLikes: {
+        likesCount: { $size: "$Likes" },
+        owner: { $first: "$Owner" },
+        game: { $first: "$Game" },
+        isLiked: {
           $cond: {
-            if: {
-              $in: [req.user?._id, "$Likes.likedBy"],
-            },
+            if: { $in: [req.user?._id, "$Likes.likedBy"] },
             then: true,
             else: false,
           },
@@ -199,7 +168,6 @@ const getVideoById = asyncHandler(async (req, res) => {
     {
       $project: {
         videoFile: 1,
-        owner: 1,
         title: 1,
         description: 1,
         views: 1,
@@ -208,11 +176,19 @@ const getVideoById = asyncHandler(async (req, res) => {
         comments: 1,
         likesCount: 1,
         isLiked: 1,
+        "owner.emailVerified": 1,
+        "owner.fullName": 1,
+        "owner.avatar": 1,
+        "owner.role": 1,
+        "owner.userName": 1,
+        "game.gameName": 1,
+        "game.genres": 1,
+        "game.coverImage": 1,
       },
     },
   ]);
 
-  if (!video) throw new apiError(404, "No video found");
+  if (!video || video.length === 0) throw new apiError(404, "No video found");
 
   // Increment the video count by 1
   await Video.findByIdAndUpdate(videoId, { $inc: { views: 1 } });

@@ -80,8 +80,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
 // To add a comment to a specific video
 const addComment = asyncHandler(async (req, res) => {
-  const { videoId } = req.params;
-  const { content } = req.body;
+  const { videoId, content } = req.body;
   if (!content) throw new apiError(400, "Please enter a comment");
 
   const video = await Video.findById(videoId);

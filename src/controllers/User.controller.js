@@ -307,13 +307,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 export function checkRole(role) {
   return (req, res, next) => {
-    // Assuming user information is stored in req.user
     const user = req;
     if (user && user.roles && user.roles.includes(role)) {
       // User has the required role, proceed to the next middleware or route handler
       next();
     } else {
-      // User does not have the required role, send a forbidden response
       res.status(403).send("Forbidden");
     }
   };
