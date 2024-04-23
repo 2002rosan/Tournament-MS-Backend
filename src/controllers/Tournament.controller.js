@@ -57,7 +57,7 @@ const createTournament = asyncHandler(async (req, res) => {
     game,
     schedule,
     playerLimit,
-    teamBased, // Include teamBased flag in the tournament document
+    teamBased,
   });
 
   return res

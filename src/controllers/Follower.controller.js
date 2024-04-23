@@ -38,64 +38,8 @@ const getUserFollowers = asyncHandler(async (req, res) => {
 
   if (!isValidObjectId(channelId)) throw new apiError(400, "Invalid user ID");
 
-  channelId = new mongoose.Types.ObjectId(channelId);
-
-  const followers = await Follower.aggregate([
-    {
-      $match: {
-        channel: channelId,
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "follower",
-        foreignField: "_id",
-        as: "follower",
-        pipeline: [
-          {
-            $lookup: {
-              from: "followers",
-              localField: "_id",
-              foreignField: "channel",
-              as: "followedToFollower",
-            },
-          },
-          {
-            $addFields: {
-              followedToFollower: {
-                $cond: {
-                  if: {
-                    $in: [channelId, "$followedToFollower.follower"],
-                  },
-                  then: true,
-                  else: false,
-                },
-              },
-              followersCount: {
-                $size: "$followedToFollower",
-              },
-            },
-          },
-        ],
-      },
-    },
-    {
-      $unwind: "$follower",
-    },
-    {
-      $project: {
-        _id: 0,
-        follower: {
-          _id: 1,
-          userName: 1,
-          fullName: 1,
-          avatar: 1,
-          followedToFollower: 1,
-          followersCount: 1,
-        },
-      },
-    },
+  const followers = await Follower.find({ channel: channelId }).populate([
+    { path: "follower", select: "fullName userName role avatar emailVerified" },
   ]);
 
   return res.status(200).json(new apiResponse(200, followers, "Followers"));
@@ -104,63 +48,9 @@ const getUserFollowers = asyncHandler(async (req, res) => {
 const getUserFollowing = asyncHandler(async (req, res) => {
   const { followerId } = req.params;
 
-  const followingUsers = await Follower.aggregate([
-    {
-      $match: {
-        follower: new mongoose.Types.ObjectId(followerId),
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "channel",
-        foreignField: "_id",
-        as: "followedChannel",
-        pipeline: [
-          {
-            $lookup: {
-              from: "videos",
-              localField: "_id",
-              foreignField: "ownerId",
-              as: "videos",
-            },
-          },
-          {
-            $addFields: {
-              latestVideo: {
-                $last: "$videos",
-              },
-            },
-          },
-        ],
-      },
-    },
-    {
-      $unwind: "$followedChannel",
-    },
-    {
-      $project: {
-        _id: 0,
-        followedChannel: {
-          _id: 1,
-          userName: 1,
-          fullName: 1,
-          avatar: 1,
-          latestVideo: {
-            _id: 1,
-            videoFile: 1,
-            thumbnail: 1,
-            ownerId: 1,
-            title: 1,
-            description: 1,
-            duration: 1,
-            createdAt: 1,
-            views: 1,
-          },
-        },
-      },
-    },
-  ]);
+  const followingUsers = await Follower.find({ follower: followerId }).populate(
+    { path: "channel", select: "fullName userName role avatar emailVerified" }
+  );
 
   return res
     .status(200)
