@@ -1,8 +1,8 @@
-PORT        = 8000
+PORT                        = 8000
 
-MONGODB_URL = mongodb+srv://rosan:rosan123@cluster0.2h09dce.mongodb.net
+MONGODB_URL                 = mongodb+srv://rosan:rosan123@cluster0.2h09dce.mongodb.net
 
-CORS_ORIGIN =*
+CORS_ORIGIN                 =*
 
 ACCESS_TOKEN_SECRET         = Do91Q34OqMsdSpIg4GvgQwpQIJr9ZkqoKo7pQdwzbS5FSkZHXebfm0X2elidIxs3
 

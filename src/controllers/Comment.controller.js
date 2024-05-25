@@ -92,6 +92,9 @@ const addComment = asyncHandler(async (req, res) => {
     owner: req.user?.id,
   });
   if (!comment) throw new apiError(400, "Comment not created");
+  await comment.populate([
+    { path: "owner", select: "avatar userName emailVerified fullName" },
+  ]);
 
   return res.status(200).json(new apiResponse(200, comment, "Comment created"));
 });
